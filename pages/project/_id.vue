@@ -1,8 +1,6 @@
 <template>
   <div>
-    <PageHeader :breadcrumbs="breadcrumbs">
-      <span slot="title">Projects</span>
-    </PageHeader>
+    <PageHeader :breadcrumbs="breadcrumbs" :title="project.name" />
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12">
@@ -38,9 +36,6 @@ export default {
           label: 'Projects list',
           url: '/project/',
           router: true,
-        },
-        {
-          label: this.project.name,
         },
       ];
     },

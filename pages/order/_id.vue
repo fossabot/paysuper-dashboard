@@ -1,13 +1,9 @@
 <template>
   <div>
-    <PageHeader>
-      <span slot="title">Order #{{order.id}}</span>
+    <PageHeader :breadcrumbs="breadcrumbs">
+      <span slot="title">Transaction #{{order.id}}</span>
     </PageHeader>
     <div class="characteristic-container">
-      <nuxt-link tag="button" class="btn btn-outline-primary btn btn-back" active-class to="/order">
-        <i class="fa fa-angle-double-left"></i> Back
-      </nuxt-link>
-
       <div>
         <h2>Transaction details</h2>
 
@@ -219,7 +215,7 @@
 <script>
 import axios from 'axios';
 import { PageHeader } from '@protocol-one/ui-kit';
-import Commission from '~/mixins/commission';
+import Commission from '@/mixins/commission';
 
 export default {
   middleware: 'IsNotAuthenticated',
@@ -259,6 +255,15 @@ export default {
     },
   },
   computed: {
+    breadcrumbs() {
+      return [
+        {
+          label: 'Transactions search',
+          url: '/order/',
+          router: true,
+        },
+      ];
+    },
     externalId() {
       return this.order.order_id && this.order.order_id.length > 0
         ? this.order.order_id : '&mdash;';

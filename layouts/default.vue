@@ -64,7 +64,7 @@ export default {
         links = [
           ...links,
           {
-            label: 'Orders',
+            label: 'Transactions search',
             url: '/order',
             router: true,
             name: 'order',

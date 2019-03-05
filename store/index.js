@@ -1,6 +1,6 @@
 import cookieParser from 'cookieparser';
 import cookie from 'js-cookie';
-import api from '~/api/auth';
+import api from '@/api/auth';
 
 export default {
   state: () => ({

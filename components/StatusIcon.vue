@@ -1,5 +1,5 @@
 <template>
-  <span class="icon-check-in-circle" :class="`_${status}`">
+  <span class="status-icon" :class="`_${status}`">
     <IconDocument v-if="status === 'initial'" />
     <IconCheck v-if="status === 'complete'" />
     <IconIncomplete v-if="status === 'incomplete'" />
@@ -32,7 +32,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.icon-check-in-circle {
+.status-icon {
   width: 40px;
   height: 40px;
   border-radius: 50%;

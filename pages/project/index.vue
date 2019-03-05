@@ -1,7 +1,6 @@
 <template>
   <div>
-    <PageHeader :breadcrumbs="[{label: 'Projects list'}]">
-      <span slot="title">Projects</span>
+    <PageHeader :breadcrumbs="[{label: '...', url: '/'}]" title="Projects">
       <template slot="right">
         <div>
           <a href="#" @click="viewType = 'panels'">panels</a>

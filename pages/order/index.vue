@@ -1,77 +1,108 @@
 <template>
   <div>
-    <PageHeader>
-      <span slot="title">Order</span>
-    </PageHeader>
+    <PageHeader :breadcrumbs="[{label: '...', url: '/'}]" title="Transactions search" />
     <div style="width: 100%;">
-      <order-search-panel @onSearch="onSearch"></order-search-panel>
+      <TransactionDetailedFilters
+        @searchRequested="handleFiltersSearchRequest"
+        :getFilterValues="getFilterValues"
+        :getEmptyFilterValues="getEmptyFilterValues"
+        ref="filters"
+      />
 
-      <div class="col-12">
-        <order-item-list :count="count" :items="items" @onPageChange="onPageChange">
-        </order-item-list>
-      </div>
+      <TransactionsList
+        :items="items"
+        :count="count"
+      />
+
+      <UiPaginator
+        v-if="items.length"
+        :offset="filters.offset"
+        :limit="filters.limit"
+        :count="count"
+        @pageChanged="handlePageChange"
+      />
+      <p v-if="!items.length" class="no-results">Computer says no results</p>
+
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
+import { mapState, mapGetters, mapActions } from 'vuex';
 import { PageHeader } from '@protocol-one/ui-kit';
-import OrderSearchPanel from '@/components/OrderSearchPanel.vue';
-import OrderItemList from '@/components/OrderItemList.vue';
+import TransactionDetailedFilters from '@/components/TransactionDetailedFilters.vue';
+import TransactionsList from '@/components/TransactionsList.vue';
+import UiPaginator from '@/components/UiPaginator.vue';
 
 export default {
   middleware: 'IsNotAuthenticated',
-  components: { OrderSearchPanel, OrderItemList, PageHeader },
+  components: {
+    TransactionDetailedFilters, TransactionsList, PageHeader, UiPaginator,
+  },
+  asyncData({ store, app }) {
+    return store.dispatch('order/initState', {
+      query: app.router.history.current.query,
+    });
+  },
   data() {
     return {
-      count: 0,
-      items: [],
-      filters: {
-        limit: 10,
-        offset: 0,
-        sort: ['_id'],
-      },
+      filters: {},
+      isSearchRouting: false,
     };
   },
-  methods: {
-    onChangeCountry(val) {
-
-    },
-    onPageChange(limit, offset, sortBy) {
-      this.filters.limit = limit;
-      this.filters.offset = offset;
-      this.filters.sort = sortBy;
-
-      this.onSearch(this.filters);
-    },
-    onSearch(filters) {
-      const self = this;
-      this.filters = { ...this.filters, ...filters };
-
-      let url = `${process.env.apiServerUrl}/api/v1/s/order`;
-
-      if (Object.keys(this.filters).length > 0) {
-        url += `?${$.param(this.filters)}`;
-      }
-
-      axios.get(url, { headers: { Authorization: `Bearer ${this.$store.state.user.accessToken}` } })
-        .then((response) => {
-          if (!response.data || !response.data.count || !response.data.items) {
-            return;
-          }
-
-          self.items = response.data.items;
-          self.count = response.data.count;
-        }).catch(() => {
-
-        });
-    },
+  computed: {
+    ...mapState('order', ['query']),
+    ...mapGetters('order', ['items', 'count', 'getFilterValues', 'getEmptyFilterValues']),
   },
-  watch: {
-    limit(value) {
-      this.filters.limit = value;
+  beforeRouteUpdate(to, from, next) {
+    if (!this.isSearchRouting) {
+      this.initQuery(to.query);
+      this.$refs.filters.updateFiltersFromQuery();
+      this.updateFiltersFromQuery();
+    }
+    this.isSearchRouting = false;
+    next();
+  },
+  created() {
+    this.updateFiltersFromQuery();
+  },
+  methods: {
+    ...mapActions('order', ['searchTransactions', 'submitFilters', 'initQuery']),
+
+    handlePageChange({ offset }) {
+      this.filters.offset = offset;
+      this.submitFilters({ offset });
+      this.searchTransactions();
+      this.isSearchRouting = true;
+      this.navigate();
+    },
+
+    handleFiltersSearchRequest(filters) {
+      this.submitFilters(filters);
+      this.searchTransactions();
+      this.isSearchRouting = true;
+      this.navigate();
+    },
+
+    updateFiltersFromQuery() {
+      this.filters = this.getFilterValues(['offset', 'limit']);
+    },
+
+    navigate() {
+      this.$router.push({
+        path: this.$route.path,
+        query: this.query,
+      });
     },
   },
 };
 </script>
+
+<style lang="scss">
+.no-results {
+  font-size: 20px;
+  color: #B1B1B1;
+  text-align: center;
+  padding: 100px 0;
+}
+</style>
