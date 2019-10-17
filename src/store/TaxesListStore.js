@@ -83,7 +83,7 @@ export default function createProjectsListStore() {
       },
 
       async fetchTaxes({ commit, rootState }) {
-        const { data } = await axios.get(`${rootState.config.apiUrl}/admin/api/v1/vat_reports`);
+        const { data } = await axios.get(`${rootState.config.apiUrl}/system/api/v1/vat_reports`);
         commit('taxes', data.items);
       },
     },

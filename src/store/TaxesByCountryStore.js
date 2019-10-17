@@ -87,7 +87,7 @@ export default function createProjectsListStore() {
         }, { arrayFormat: 'brackets' });
 
         const { data } = await axios.get(
-          `${rootState.config.apiUrl}/admin/api/v1/vat_reports/country/${state.countryId}?${query}`,
+          `${rootState.config.apiUrl}/system/api/v1/vat_reports/country/${state.countryId}?${query}`,
         );
         commit('countryTaxes', data);
       },

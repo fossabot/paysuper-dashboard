@@ -352,7 +352,7 @@ export default function createMerchantStore() {
 
       async changeMerchantStatus({ state, commit, rootState }, { status, message = '' }) {
         const response = await axios.put(
-          `${rootState.config.apiUrl}/admin/api/v1/merchants/${state.merchant.id}/change-status`,
+          `${rootState.config.apiUrl}/system/api/v1/merchants/${state.merchant.id}/change-status`,
           { status, message },
         ).catch(console.warn);
 
@@ -383,7 +383,7 @@ export default function createMerchantStore() {
 
       async sendNotification({ state, rootState }, notification) {
         const response = await axios.post(
-          `${rootState.config.apiUrl}/admin/api/v1/merchants/${state.merchant.id}/notifications`,
+          `${rootState.config.apiUrl}/system/api/v1/merchants/${state.merchant.id}/notifications`,
           notification,
         );
 
