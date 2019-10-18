@@ -3,8 +3,11 @@ import { extend } from 'lodash-es';
 import { format } from 'date-fns';
 import { showSuccessMessage, showErrorMessage } from '@/helpers/notifications';
 
-function $navigate(path, query = {}) {
+function $navigatePath(path, query = {}) {
   this.$router.push({ path, query });
+}
+function $navigateName(name, params = {}) {
+  this.$router.push({ name, params });
 }
 
 function $formatPrice(value, currency) {
@@ -51,7 +54,8 @@ function $appEventsOn(eventName, handler) {
 extend(Vue.prototype, {
   $appEvents: new Vue(),
   $appEventsOn,
-  $navigate,
+  $navigatePath,
+  $navigateName,
   $formatPrice,
   $formatDate,
   $showSuccessMessage: showSuccessMessage,

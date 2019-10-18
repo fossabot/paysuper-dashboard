@@ -50,7 +50,7 @@ export default {
   <UiButton
     class="create-button"
     :disabled="name.length < 3"
-    @click="$navigate('/projects/new', { name, image })"
+    @click="$navigatePath('/projects/new', { name, image })"
   >
     CREATE
   </UiButton>

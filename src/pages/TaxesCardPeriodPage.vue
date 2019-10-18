@@ -88,7 +88,7 @@ export default {
 
     navigate() {
       this.isSearchRouting = true;
-      this.$navigate(this.$route.path, this.query);
+      this.$navigatePath(this.$route.path, this.query);
     },
   },
 };

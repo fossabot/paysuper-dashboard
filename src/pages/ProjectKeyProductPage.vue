@@ -183,7 +183,7 @@ export default {
             projectId: this.project.id,
           });
           this.$showSuccessMessage('The key product is successfuly created');
-          this.$navigate(`/projects/${this.project.id}/game-keys/${this.keyProductId}`);
+          this.$navigatePath(`/projects/${this.project.id}/game-keys/${this.keyProductId}`);
         }
       } catch (error) {
         this.$showErrorMessage(error);

@@ -127,26 +127,13 @@ export default {
       if (isEqual(this.$route.query, this.query)) {
         return;
       }
-      this.$router.push({
-        path: this.$route.path,
-        query: this.query,
-      });
-    },
-
-    createNew() {
-      this.$router.push({
-        name: 'ProjectVirtualItemEdit',
-        params: { itemId: 'new' },
-      });
+      this.$navigatePath(this.$route.path, this.query);
     },
 
     goToItemPage(item) {
       this.setCurrentItem(item);
       this.setIsLoading(true);
-      this.$router.push({
-        name: 'ProjectVirtualItemEdit',
-        params: { itemId: item.id },
-      });
+      this.$navigateName('ProjectVirtualItemEdit', { itemId: item.id });
     },
 
     showConfirm(item) {
@@ -217,7 +204,10 @@ export default {
             <IconUpload class="upload-icon" fill="#919699" />
             QUILIN PACKAGES
           </UiButton>
-          <UiButton text="ADD ITEM" @click.prevent="createNew"></UiButton>
+          <UiButton
+            text="ADD ITEM"
+            @click.prevent="$navigateName('ProjectVirtualItemEdit', { itemId: 'new' })"
+          />
         </div>
       </div>
 

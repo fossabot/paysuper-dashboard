@@ -67,7 +67,7 @@ export default {
       >
         <UiTooltipMenuItem
           iconComponent="IconPen"
-          @click="$navigate(projectCardUrl)"
+          @click="$navigatePath(projectCardUrl)"
         >
           Edit
         </UiTooltipMenuItem>
