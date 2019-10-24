@@ -76,7 +76,7 @@ export default function createUserStore() {
 
       async fetchProfile({ commit }) {
         try {
-          const { data } = await axios.get('{apiUrl}/admin/api/v1/user/profile');
+          const { data } = await axios.get('{apiUrl}/api/v1/user/profile');
           commit('profile', data);
           if (data.last_step) {
             commit('currentStepCode', data.last_step);
@@ -92,7 +92,7 @@ export default function createUserStore() {
       async updateProfile({ rootState, commit }, props) {
         try {
           const { data } = await axios.patch(
-            `${rootState.config.apiUrl}/admin/api/v1/user/profile`,
+            `${rootState.config.apiUrl}/api/v1/user/profile`,
             props,
           );
           commit('profile', data);

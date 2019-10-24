@@ -10,7 +10,7 @@ export default function createLeaveFeedbackStore() {
       async postFeedback({ rootState }, review) {
         try {
           await axios.post(
-            `${rootState.config.apiUrl}/admin/api/v1/user/feedback`,
+            `${rootState.config.apiUrl}/api/v1/user/feedback`,
             {
               review,
               page_id: 'primary_onboarding',

@@ -12,7 +12,7 @@ export default function createUserStore() {
 
       async confirmEmail({ rootState }, token) {
         await axios.put(
-          `${rootState.config.apiUrl}/api/v1/user/confirm_email`,
+          `${rootState.config.apiUrl}/user/confirm_email`,
           {
             token,
           },
