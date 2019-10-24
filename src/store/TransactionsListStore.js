@@ -1,24 +1,22 @@
 import axios from 'axios';
 import qs from 'qs';
-import { get } from 'lodash-es';
 import SearchBuilder from '@/tools/SearchBuilder/SearchBuilder';
-import merchantsListScheme from '@/schemes/merchantsListScheme';
-import { signedStatusCode, notSignedStatusCodes } from '@/schemes/merchantStatusScheme';
+import projectTransactionsScheme from '@/schemes/projectTransactionsScheme';
 
-const searchBuilder = new SearchBuilder(merchantsListScheme);
+const searchBuilder = new SearchBuilder(projectTransactionsScheme);
 
-export default function createMerchantListStore() {
+export default function createTransactionsListStore() {
   return {
-    state: {
-      page: '',
-      merchants: {
+    state: () => ({
+      transactionsList: {
         items: [],
         count: 0,
       },
       filterValues: {},
       query: {},
       apiQuery: {},
-    },
+      currentItem: {},
+    }),
 
     getters: {
       getFilterValues(state) {
@@ -37,11 +35,8 @@ export default function createMerchantListStore() {
     },
 
     mutations: {
-      page(store, data) {
-        store.page = data;
-      },
-      merchants(store, data) {
-        store.merchants = data;
+      transactionsList(store, data) {
+        store.transactionsList = data;
       },
       filterValues(store, value) {
         store.filterValues = value;
@@ -55,42 +50,32 @@ export default function createMerchantListStore() {
     },
 
     actions: {
-      async initState({ commit, getters, dispatch }, { query, page }) {
-        commit('page', page);
+      async initState({ getters, dispatch }, { query }) {
         const filters = getters.getFilterValues();
         dispatch('submitFilters', filters);
         dispatch('initQuery', query);
-        await dispatch('fetchMerchants');
+        await dispatch('fetchTransactions');
       },
 
-      async fetchMerchants({ state, commit, rootState }) {
-        let { status } = state.apiQuery;
-        if (state.page === 'merchantsList') {
-          status = [signedStatusCode];
-        }
-        if (state.page === 'agreementRequestsList') {
-          status = status || notSignedStatusCodes;
-        }
+      async fetchTransactions({ state, commit, rootState }) {
         const query = qs.stringify({
           ...state.apiQuery,
-          status,
         }, { arrayFormat: 'brackets' });
-        const url = `${rootState.config.apiUrl}/system/api/v1/merchants?${query}`;
+        const url = `${rootState.config.apiUrl}/admin/api/v1/order?${query}&sort[]=-created_at`;
 
         const response = await axios.get(url);
-        const merchants = get(response, 'data.items') ? response.data : {
-          items: [],
-          count: 0,
+        const transactionsList = {
+          ...response.data,
+          items: response.data.items || [],
         };
-
         // append mode for infinite scroll
-        if (state.apiQuery.offset > 0 && merchants.count === state.merchants.count) {
-          merchants.items = [
-            ...state.merchants.items,
-            ...merchants.items,
+        if (state.apiQuery.offset > 0 && transactionsList.count === state.transactionsList.count) {
+          transactionsList.items = [
+            ...state.transactionsList.items,
+            ...transactionsList.items,
           ];
         }
-        commit('merchants', merchants);
+        commit('transactionsList', transactionsList);
       },
 
       initQuery({ commit }, query) {
@@ -114,11 +99,16 @@ export default function createMerchantListStore() {
         commit('query', query);
       },
 
-      async sendNotification({ rootState }, { merchantId, notification }) {
-        await axios.post(
-          `${rootState.config.apiUrl}/system/api/v1/merchants/${merchantId}/notifications`,
-          notification,
-        );
+      async refund({ rootState, commit }, { transaction, reason }) {
+        const data = {
+          reason,
+          creator_id: rootState.User.Merchant.merchant.id,
+          amount: transaction.total_payment_amount,
+        };
+        const response = await axios.post(`${rootState.config.apiUrl}/admin/api/v1/order/${transaction.uuid}/refunds`, data);
+        if (response.data) {
+          commit('refund', { items: response.data });
+        }
       },
     },
 

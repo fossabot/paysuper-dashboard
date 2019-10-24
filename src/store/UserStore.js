@@ -1,14 +1,16 @@
 import axios from 'axios';
 import MerchantStore from '@/store/MerchantStore';
+import UserNotificationsStore from './UserNotificationsStore';
+import UserProfileStore from './UserProfileStore';
 import { UNAUTHORIZED } from '@/errors';
 
-export default function createUserStore({ notifications }) {
+export default function createUserStore(resources) {
   const accessToken = localStorage.getItem('token') || '';
   return {
     state: {
       accessToken,
       isAuthorised: false,
-      authIframeSrc: '',
+      isEmailConfirmed: false,
       role: localStorage.getItem('userRole') || 'merchant',
     },
 
@@ -19,8 +21,8 @@ export default function createUserStore({ notifications }) {
       isAuthorised(state, value) {
         state.isAuthorised = value;
       },
-      authIframeSrc(state, value) {
-        state.authIframeSrc = value;
+      isEmailConfirmed(state, value) {
+        state.isEmailConfirmed = value;
       },
       role(state, value) {
         state.role = value;
@@ -28,11 +30,27 @@ export default function createUserStore({ notifications }) {
       },
     },
 
+    getters: {
+      authIframeSrc(state, getters, rootState) {
+        return `${rootState.config.ownBackendUrl}/auth1/login`;
+      },
+    },
+
     actions: {
-      async initState({ commit, dispatch, rootState }) {
-        commit('authIframeSrc', `${rootState.config.ownBackendUrl}/auth1/login`);
+      async initState({ state, commit, dispatch }) {
         try {
-          await dispatch('initUserMerchantData');
+          if (!state.accessToken) {
+            await dispatch('refreshToken');
+          }
+          await Promise.all([
+            dispatch('initUserMerchantData'),
+            dispatch('Profile/initState'),
+          ]);
+          if (state.Profile.profile.email.confirmed) {
+            commit('isEmailConfirmed', true);
+          }
+
+          dispatch('Notifications/initState');
         } catch (error) {
           if (error !== UNAUTHORIZED) {
             console.error(error);
@@ -54,6 +72,10 @@ export default function createUserStore({ notifications }) {
         localStorage.setItem('token', token);
         commit('isAuthorised', true);
         commit('accessToken', token);
+      },
+
+      setEmailConfirmed({ commit }, value) {
+        commit('isEmailConfirmed', value);
       },
 
       /**
@@ -80,6 +102,7 @@ export default function createUserStore({ notifications }) {
         } catch { }
         localStorage.removeItem('token');
         commit('isAuthorised', false);
+        commit('isEmailConfirmed', false);
         commit('accessToken', '');
       },
     },
@@ -87,7 +110,9 @@ export default function createUserStore({ notifications }) {
     namespaced: true,
 
     modules: {
-      Merchant: MerchantStore({ notifications }),
+      Merchant: MerchantStore(resources),
+      Notifications: UserNotificationsStore(resources),
+      Profile: UserProfileStore(resources),
     },
   };
 }

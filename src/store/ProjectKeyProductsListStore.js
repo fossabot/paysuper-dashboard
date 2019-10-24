@@ -65,6 +65,7 @@ export default function createProjectKeyProductsListStore() {
       async fetchKeyProducts({ state, commit, rootState }) {
         const query = qs.stringify({
           ...state.apiQuery,
+          project_id: state.projectId,
         }, { arrayFormat: 'brackets' });
         const url = `${rootState.config.apiUrl}/admin/api/v1/key-products?${query}`;
 

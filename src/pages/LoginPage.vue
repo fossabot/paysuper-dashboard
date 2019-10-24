@@ -1,18 +1,12 @@
-<template>
-  <div class="login-page">
-    <iframe class="iframe" width="360" height="500" :src="authIframeSrc" frameborder="0"></iframe>
-  </div>
-</template>
-
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'LoginPage',
 
   computed: {
     ...mapState(['config']),
-    ...mapState('User', ['authIframeSrc']),
+    ...mapGetters('User', ['authIframeSrc']),
   },
 
   created() {
@@ -20,7 +14,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('User', ['setAccessToken', 'initUserMerchantData']),
+    ...mapActions('User', ['initState', 'setAccessToken']),
     listenToMessages() {
       window.addEventListener('message', async (event) => {
         if (!event.data || event.data.source !== 'PAYSUPER_MANAGEMENT_SERVER') {
@@ -29,7 +23,7 @@ export default {
 
         if (event.data.access_token && event.data.success) {
           this.setAccessToken(event.data.access_token);
-          await this.initUserMerchantData();
+          await this.initState();
           this.redirectOnSuccessfulAuth();
         }
 
@@ -49,6 +43,13 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="login-page">
+    <iframe class="iframe" width="360" height="500" :src="authIframeSrc" frameborder="0"></iframe>
+  </div>
+</template>
+
 
 <style lang="scss" scoped>
 .login-page {

@@ -14,13 +14,13 @@ export default {
 
   created() {
     if (this.isAuthorised) {
-      this.$router.push({ path: '/dashboard' });
+      this.$router.push({ name: 'Dashboard' });
     }
   },
 
   methods: {
     goAuthoriseOrRegister() {
-      this.$router.push({ path: '/login', query: { redirect: this.$route.query.redirect } });
+      this.$router.push({ name: 'Login', query: { redirect: this.$route.query.redirect } });
     },
   },
 };

@@ -86,6 +86,17 @@ export default function createProjectsListStore() {
         commit('projects', data);
       },
 
+      async createProject({ rootState }, project) {
+        const { data } = await axios.post(
+          `${rootState.config.apiUrl}/admin/api/v1/projects`,
+          {
+            merchant_id: rootState.User.Merchant.merchant.id,
+            ...project,
+          },
+        );
+        return data.item.id;
+      },
+
       deactivateProject({ rootState }, id) {
         return axios.delete(`${rootState.config.apiUrl}/admin/api/v1/projects/${id}`);
       },

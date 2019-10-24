@@ -168,12 +168,12 @@ export default {
   align-content: center;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   margin-right: 9px;
 
   & > svg {
-    fill: #000;
+    fill: #78909C;
     transition: fill 0.2s ease-out;
   }
 

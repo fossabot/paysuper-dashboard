@@ -28,7 +28,10 @@ export default {
     <div class="text">
       <div class="title">{{ item.title }}</div>
       <div class="additional">
-        {{ item.isAvailable ? item.additional : 'Need license agreement' }}
+        {{
+          item.isAvailable
+            ? item.additional : (item.unavailableReason || 'Need license agreement')
+        }}
       </div>
     </div>
   </RouterLink>

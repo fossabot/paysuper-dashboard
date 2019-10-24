@@ -1,4 +1,6 @@
 
+import { signedStatusCode } from '@/schemes/merchantStatusScheme';
+
 const projectPagesMeta = {
   layout: 'Layout',
   isAuthRequired: true,
@@ -17,9 +19,10 @@ const merchantPagesMeta = {
   layout: 'Layout',
   isAuthRequired: true,
   specialNav: {
-    backLink() {
+    backLink({ store }) {
+      const isSigned = store.state.Merchant.merchant.status === Number(signedStatusCode);
       return {
-        url: '/merchants/',
+        url: isSigned ? '/merchants/' : '/agreement-requests/',
         label: 'Back to list',
       };
     },
@@ -35,14 +38,14 @@ const routes = [
   {
     path: '/transactions/',
     component: () => import('@/pages/TransactionsList.vue'),
-    meta: { layout: 'Page', isAuthRequired: true },
+    meta: { layout: 'Layout', isAuthRequired: true },
     name: 'transactions',
   },
   {
-    path: '/transactions/:id',
+    path: '/transactions/:transactionId',
     component: () => import('@/pages/TransactionCard.vue'),
-    meta: { layout: 'Page', isAuthRequired: true },
-    name: 'transactions-card',
+    meta: { layout: 'Layout', isAuthRequired: true },
+    name: 'transactionsCard',
   },
   {
     path: '/projects/',
@@ -54,6 +57,7 @@ const routes = [
     path: '/projects/:id',
     component: () => import('@/pages/ProjectPage.vue'),
     redirect: { name: 'ProjectSettings' },
+    name: 'Project',
     children: [
       {
         path: 'virtual-currency/',
@@ -223,30 +227,32 @@ const routes = [
     path: '/privacy_policy/',
     component: () => import('@/pages/privacy_policy.vue'),
   },
-  {
-    path: '/login/',
-    component: () => import('@/pages/login.vue'),
-  },
 
   {
-    path: '/payform-sdk/',
+    path: '/login/',
+    component: () => import('@/pages/LoginPage.vue'),
+    name: 'Login',
+  },
+  {
+    path: '/form-demo/',
     component: () => import('@/pages/PaymentFormSdk.vue'),
-    meta: { isStoreInitDisabled: true },
+    meta: { layout: 'PageShallow', initStore: ['config'] },
+    name: 'PaymentFormSdk',
+  },
+  {
+    path: '/payform-sdk/',
+    redirect: { name: 'PaymentFormSdk' },
   },
   {
     path: '/payform-page/',
     component: () => import('@/pages/PaymentFormPage.vue'),
-    meta: { layout: 'PageFormLayout', isStoreInitDisabled: true },
-  },
-  {
-    path: '/payform-loading/',
-    component: () => import('@/pages/PaymentFormLoading.vue'),
-    meta: { layout: 'PageFormLayout', isStoreInitDisabled: true },
+    meta: { layout: 'PageFormLayout', initStore: false },
   },
   {
     path: '/profile/',
-    component: () => import('@/pages/UserProfile.vue'),
+    component: () => import('@/pages/UserProfilePage.vue'),
     meta: { layout: 'PageShallow', isAuthRequired: true },
+    name: 'UserProfile',
   },
   {
     path: '/sign-up/',

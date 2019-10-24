@@ -249,7 +249,7 @@ export default {
               <IconNoImage v-else class="img" width="18" height="18" fill="#919699" />
             </UiTableCell>
             <UiTableCell align="left" valign="top" :title="item.name.en">
-              <span class="cell-text">{{ item.name.en }}</span>
+              <span class="cell-text vi-name">{{ item.name.en }}</span>
             </UiTableCell>
             <UiTableCell align="left" valign="top" :title="item.sku">
               <span class="cell-text">{{ item.sku }}</span>
@@ -360,5 +360,11 @@ export default {
   margin-left: 4px;
   position: relative;
   top: 1px;
+}
+
+.vi-name {
+  display: block;
+  max-width: 307px;
+  overflow: hidden;
 }
 </style>

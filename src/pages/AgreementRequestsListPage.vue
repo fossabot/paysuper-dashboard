@@ -23,6 +23,7 @@ export default {
     try {
       await registerStoreModule('AgreementRequestsList', MerchanstListStore, {
         query: route.query,
+        page: 'agreementRequestsList',
       });
     } catch (error) {
       store.dispatch('setPageError', error);

@@ -181,7 +181,11 @@ export default function createMerchantStore() {
         if (merchantId) {
           const response = await axios.get(
             `${rootState.config.apiUrl}/admin/api/v1/merchants/${merchantId}/status`,
-          );
+          ).catch((error) => {
+            console.error(error);
+            // A fallback if something REALLY gone wrong. Not useful in normal flow
+            return { data: {} };
+          });
 
           if (response.data) {
             const merchantStatus = get(response, 'data.status', 'draft');

@@ -3,6 +3,10 @@ import { get } from 'lodash-es';
 
 export default function extendAxios(store) {
   const createSetAuthInterceptor = () => (config) => {
+    config.url = config.url
+      .replace(/^{apiUrl}/, store.state.config.apiUrl)
+      .replace(/^{ownBackendUrl}/, store.state.config.ownBackendUrl);
+
     if (!config.url.includes('/api/v1')) {
       return config;
     }
@@ -31,7 +35,6 @@ export default function extendAxios(store) {
       return http(error.config);
     } catch {
       refreshTokenPromise = null;
-      await store.dispatch('User/logout');
       return Promise.reject(error);
     }
   };

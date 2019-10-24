@@ -70,10 +70,8 @@ export default {
     ...mapActions(['setIsLoading', 'uploadImage']),
     ...mapActions('Project', [
       'initState',
-      'createProject',
       'saveProject',
     ]),
-    ...mapActions('User/Merchant', ['completeStep']),
 
     updateProjectLocal() {
       this.projectLocal = cloneDeep(this.project);
@@ -82,19 +80,7 @@ export default {
     async handleSaveProject() {
       this.setIsLoading(true);
       try {
-        if (this.project.id) {
-          await this.saveProject(this.projectLocal);
-        } else {
-          await this.createProject(this.projectLocal);
-          /**
-           * TODO: after https://protocolone.tpondemand.com/restui/board.aspx?#page=task/191909
-           * remove this and use has_projects attribute from merchant object
-           */
-          this.completeStep('projects');
-          this.$router.push({
-            path: `/projects/${this.project.id}`,
-          });
-        }
+        await this.saveProject(this.projectLocal);
         this.updateProjectLocal();
         this.$showSuccessMessage('Project saved successfully');
       } catch (error) {

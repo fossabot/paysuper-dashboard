@@ -13,7 +13,7 @@
     "test:dev": "vue-cli-service test:unit --watchAll",
     "coverage": "vue-cli-service test:unit --coverage --coverageReporters=lcov",
     "coverage:publish": "npm run coverage && codecov",
-    "serve:be": "cross-env NODE_ENV=local nodemon ./index.js --watch './backend/**/*.js'"
+    "serve:be": "cross-env NODE_ENV=local nodemon ./index.js --watch './backend/**/*.*'"
   },
   "dependencies": {
     "@protocol-one/ui-kit": "^1.25.2",
@@ -33,6 +33,7 @@
     "dotenv": "^7.0.0",
     "file-saver": "^2.0.2",
     "fs": "0.0.1-security",
+    "handlebars": "^4.0.3",
     "hellosign-embedded": "^2.5.0",
     "ioredis": "^4.6.2",
     "js-cookie": "^2.2.0",

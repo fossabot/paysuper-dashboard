@@ -1,7 +1,6 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import { findKey, size } from 'lodash-es';
-import UserProfileStore from '@/store/UserProfileStore';
 import UserProfilePerson from '@/components/UserProfilePerson.vue';
 import UserProfileHelp from '@/components/UserProfileHelp.vue';
 import UserProfileCompany from '@/components/UserProfileCompany.vue';
@@ -10,7 +9,7 @@ import ConfirmYourEmail from '@/components/ConfirmYourEmail.vue';
 import Notifications from '@/mixins/Notifications';
 
 export default {
-  name: 'PageUserProfile',
+  name: 'UserProfilePage',
 
   mixins: [Notifications],
 
@@ -20,14 +19,6 @@ export default {
     UserProfileCompany,
     StepsProgressBar,
     ConfirmYourEmail,
-  },
-
-  async asyncData({ store, registerStoreModule }) {
-    try {
-      await registerStoreModule('UserProfile', UserProfileStore);
-    } catch (error) {
-      store.dispatch('setPageError', error);
-    }
   },
 
   data() {
@@ -59,7 +50,7 @@ export default {
   },
 
   computed: {
-    ...mapState('UserProfile', ['profile', 'currentStepCode']),
+    ...mapState('User/Profile', ['profile', 'currentStepCode']),
 
     isConfirmEmailStep() {
       return this.currentStepCode === 'confirmEmail';
@@ -86,12 +77,14 @@ export default {
 
   mounted() {
     if (this.currentStepCode === 'confirmEmail') {
-      this.initWaitingForEmailConfirm();
+      this.waitForEmailConfirm();
+      this.$router.push({ name: 'Dashboard' });
     }
   },
 
   methods: {
-    ...mapActions('UserProfile', ['updateProfile', 'setCurrentStepCode', 'initWaitingForEmailConfirm']),
+    ...mapActions('User', ['setEmailConfirmed']),
+    ...mapActions('User/Profile', ['updateProfile', 'setCurrentStepCode', 'waitForEmailConfirm']),
 
     handleStepComplete(value) {
       this.currentStep.isValid = value;
@@ -110,7 +103,9 @@ export default {
         this.setCurrentStepCode(nextStepCode);
 
         if (nextStepCode === 'confirmEmail') {
-          this.initWaitingForEmailConfirm();
+          await this.waitForEmailConfirm();
+          this.setEmailConfirmed(true);
+          this.$router.push({ name: 'Dashboard' });
         }
       } catch (error) {
         this.$_Notifications_showErrorMessage(error.message);

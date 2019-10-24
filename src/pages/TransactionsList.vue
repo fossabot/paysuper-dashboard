@@ -1,77 +1,223 @@
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex';
-import { PageHeader, UiPaginator } from '@protocol-one/ui-kit';
-import TransactionsSearchStore from '@/store/TransactionsSearchStore';
-import TransactionFilters from '@/components/TransactionFilters.vue';
-import TransactionsList from '@/components/TransactionsList.vue';
+import {
+  mapState, mapGetters, mapActions,
+} from 'vuex';
+import { format } from 'date-fns';
+import {
+  debounce, isEqual, get, find, remove,
+} from 'lodash-es';
+import transactionsStatusScheme from '@/schemes/transactionsStatusScheme';
+import PictureTabletWithChart from '@/components/PictureTabletWithChart.vue';
+import TransactionsListStore from '@/store/TransactionsListStore';
 import NoResults from '@/components/NoResults.vue';
+import TransactionsListExport from '@/components/TransactionsListExport.vue';
+import TransactionRefund from '@/components/TransactionRefund.vue';
+
+const STATUS_COLOR = {
+  created: 'blue',
+  processed: 'green',
+  pending: 'yellow',
+  refunded: 'red',
+  chargeback: 'red',
+  rejected: 'transparent',
+  canceled: 'transparent',
+};
 
 export default {
+  name: 'transactions',
+
   components: {
-    TransactionFilters,
-    TransactionsList,
-    PageHeader,
-    UiPaginator,
+    TransactionsListExport,
+    PictureTabletWithChart,
     NoResults,
+    TransactionRefund,
   },
-  asyncData({ store, route, resources }) {
-    if (store.state.TransactionSearch) {
-      return undefined;
+
+  async asyncData({ store, registerStoreModule, route }) {
+    try {
+      await registerStoreModule('Transactions', TransactionsListStore, {
+        query: route.query,
+      });
+    } catch (error) {
+      store.dispatch('setPageError', error);
     }
-    store.registerModule('TransactionSearch', TransactionsSearchStore(resources));
-    return store.dispatch('TransactionSearch/initState', {
-      query: route.query,
-    });
   },
+
   data() {
     return {
       filters: {},
-      isSearchRouting: false,
+      scheme: transactionsStatusScheme,
+      filterCounts: {},
+      showRefundModal: false,
+      currentTransaction: null,
     };
   },
+
   computed: {
-    ...mapState('TransactionSearch', ['query', 'paymentMethods', 'projects', 'statuses']),
-    ...mapGetters('TransactionSearch', ['items', 'count', 'getFilterValues', 'getEmptyFilterValues']),
+    ...mapState('Transactions', ['transactionsList', 'filterValues', 'query', 'apiQuery']),
+    ...mapGetters('Transactions', ['getFilterValues']),
+    ...mapGetters('Dictionaries', ['countries']),
+
+    handleQuickSearchInput() {
+      return debounce(() => {
+        this.filterTransactions();
+      }, 500);
+    },
+
+    dateFilter: {
+      get() {
+        return [this.filters.dateFrom || null, this.filters.dateTo || null];
+      },
+      set(value) {
+        const [dateFrom, dateTo] = value;
+        this.filters.dateFrom = dateFrom;
+        this.filters.dateTo = dateTo;
+      },
+    },
   },
-  beforeRouteUpdate(to, from, next) {
-    if (!this.isSearchRouting) {
-      this.initQuery(to.query);
-      this.$refs.filters.updateFiltersFromQuery();
-      this.updateFiltersFromQuery();
-    }
-    this.isSearchRouting = false;
-    next();
+
+  watch: {
+    filters: {
+      handler() {
+        this.fillCounts();
+      },
+      deep: true,
+    },
   },
+
   created() {
     this.updateFiltersFromQuery();
   },
+
+  mounted() {
+    this.initInfiniteScroll();
+    this.fillCounts();
+  },
+
   methods: {
-    ...mapActions('TransactionSearch', ['searchTransactions', 'submitFilters', 'initQuery']),
+    ...mapActions(['setIsLoading']),
+    ...mapActions('Transactions', [
+      'initQuery',
+      'createItem',
+      'submitFilters',
+      'fetchTransactions',
+    ]),
 
-    handlePageChange({ offset }) {
-      this.filters.offset = offset;
-      this.submitFilters(this.filters);
-      this.searchTransactions();
-      this.isSearchRouting = true;
-      this.navigate();
-    },
-
-    handleFiltersSearchRequest(filters) {
-      this.submitFilters(filters);
-      this.searchTransactions();
-      this.isSearchRouting = true;
-      this.navigate();
-    },
+    get,
 
     updateFiltersFromQuery() {
-      this.filters = this.getFilterValues(['offset', 'limit']);
+      this.filters = this.getFilterValues(['quickFilter', 'offset', 'limit', 'status']);
+    },
+
+    filterTransactions() {
+      this.filters.offset = 0;
+      this.searchItems();
+    },
+
+    async searchItems() {
+      this.isSearchRouting = true;
+      this.setIsLoading(true);
+      this.submitFilters(this.filters);
+      this.navigate();
+      await this.fetchTransactions().catch(this.$showErrorMessage);
+      this.setIsLoading(false);
+    },
+
+    initInfiniteScroll() {
+      this.$appEventsOn('contentScrollReachEnd', async () => {
+        if (
+          this.isInfiniteScrollLocked
+          || this.filters.offset + this.filters.limit >= this.transactionsList.count
+        ) {
+          return;
+        }
+        this.isInfiniteScrollLocked = true;
+
+        this.filters.offset += this.filters.limit;
+        await this.searchItems();
+        this.isInfiniteScrollLocked = false;
+      });
     },
 
     navigate() {
+      if (isEqual(this.$route.query, this.query)) {
+        return;
+      }
       this.$router.push({
         path: this.$route.path,
         query: this.query,
       });
+    },
+
+    getProductName(items) {
+      if (items === null) {
+        return 'Checkout';
+      }
+
+      if (items.length > 1) {
+        return 'Product';
+      }
+
+      return items[0].name;
+    },
+
+    getCountryByCode(code) {
+      return get(find(this.countries, ({ value }) => value === code), 'label', code);
+    },
+
+    formatDateAndTime(seconds) {
+      const datetime = new Date(seconds * 1000);
+      return format(datetime, 'dd.MM.yyyy, HH:mm:ss');
+    },
+
+    getColor(status) {
+      return STATUS_COLOR[status];
+    },
+
+    refundAvailable(status) {
+      const badStatus = [
+        'canceled',
+        'refunded',
+        'rejected',
+        'chargeback',
+      ];
+      return !badStatus.includes(status);
+    },
+
+    handleStatusInput(data) {
+      if (data === 'all') {
+        this.filters.status = [];
+        this.filters.dateFrom = null;
+        this.filters.dateTo = null;
+        this.filterTransactions();
+      }
+    },
+
+    handleFilterInput(data) {
+      if (data.value === 'all') {
+        this.filters[data.filter] = [];
+      } else if (this.filters[data.filter].includes(data.value)) {
+        remove(this.filters[data.filter], n => n === (data.value));
+      } else {
+        this.filters[data.filter].push(data.value);
+      }
+
+      this.filterTransactions();
+    },
+
+    fillCounts() {
+      this.filterCounts = {
+        status: get(this.filters, 'status.length') || 0,
+        methods: get(this.filters, 'methods.length') || 0,
+      };
+    },
+
+    async handleRefund(reason) {
+      this.setIsLoading(true);
+      await this.refund({ transaction: this.currentTransaction, reason })
+        .catch(this.$showErrorMessage);
+      this.filterTransactions();
+      this.setIsLoading(false);
     },
   },
 };
@@ -79,31 +225,203 @@ export default {
 
 <template>
   <div>
-    <PageHeader :breadcrumbs="[{label: '...', url: '/'}]" title="Transactions search" />
-    <div style="width: 100%;">
-      <TransactionFilters
-        @searchRequested="handleFiltersSearchRequest"
-        :getFilterValues="getFilterValues"
-        :getEmptyFilterValues="getEmptyFilterValues"
-        :paymentMethods="paymentMethods"
-        :projects="projects"
-        :statuses="statuses"
-        ref="filters"
-      />
+    <UiPageHeaderFrame>
+      <template slot="title">
+        Transactions
+      </template>
+      <span slot="description">
+        All your customers' transactions are presented here, organised by Products,
+        Dates and other parameters.
+        Click any transaction to dive into transaction card to see additional details.
+      </span>
+      <PictureTabletWithChart slot="picture" />
+    </UiPageHeaderFrame>
 
-      <TransactionsList
-        :items="items"
-        :count="count"
-      />
+    <UiPanel>
+      <div class="control-bar">
+        <div class="control-bar__left">
+          <UiFilterDate
+            v-model="dateFilter"
+            @input="filterTransactions"
+          />
+          <UiStatusFilter
+            @input="handleStatusInput"
+            @inputSecondLevel="handleFilterInput"
+            :value="filters"
+            :scheme="scheme"
+            :countsByStatus="filterCounts" />
+        </div>
 
-      <UiPaginator
-        v-if="items.length"
-        :offset="filters.offset"
-        :limit="filters.limit"
-        :count="count"
-        @pageChanged="handlePageChange"
-      />
-      <NoResults v-if="!items.length" />
-    </div>
+        <div class="control-bar__right">
+          <transactions-list-export></transactions-list-export>
+        </div>
+      </div>
+
+      <div class="transactions-list">
+        <UiTable v-if="transactionsList.items.length">
+          <UiTableRow :isHead="true">
+            <UiTableCell align="left">Project</UiTableCell>
+            <UiTableCell align="left">Product</UiTableCell>
+            <UiTableCell align="left">Date & Time</UiTableCell>
+            <UiTableCell align="left">Country</UiTableCell>
+            <UiTableCell align="left">Method</UiTableCell>
+            <UiTableCell align="left">Transaction ID</UiTableCell>
+            <UiTableCell align="left">Net amount</UiTableCell>
+            <UiTableCell align="left" width="3%"></UiTableCell>
+          </UiTableRow>
+          <UiTableRow
+            class="transaction"
+            v-for="(transaction, index) in transactionsList.items"
+            :key="index"
+            :link="`/transactions/${transaction.uuid}`">
+            <UiTableCell align="left" class="status">
+              <div class="status-dot"
+                   :class="getColor(transaction.status)"
+                   :title="transaction.status"></div>
+              {{ transaction.project.name.en }}
+            </UiTableCell>
+            <UiTableCell align="left">{{ getProductName(transaction.items) }}</UiTableCell>
+            <UiTableCell align="left">
+              {{ formatDateAndTime(transaction.created_at.seconds) }}
+            </UiTableCell>
+            <UiTableCell
+              align="left"
+              class="country-name"
+              :title="getCountryByCode(transaction.country_code)">
+              <div>{{ getCountryByCode(transaction.country_code) }}</div>
+            </UiTableCell>
+            <UiTableCell align="left">{{ transaction.payment_method.title }}</UiTableCell>
+            <UiTableCell align="left">{{ transaction.transaction }}</UiTableCell>
+            <UiTableCell align="left" :class="`status-${transaction.status}`">
+              {{$formatPrice(transaction.total_payment_amount, transaction.currency)}}
+            </UiTableCell>
+            <UiTableCell align="left">
+              <div class="transaction__refund"
+                   @click.stop.prevent="showRefundModal = true, currentTransaction = transaction">
+                <IconRetry v-if="refundAvailable(transaction.status)"/>
+                <UiTip
+                  width="140px"
+                  :visible="true"
+                  position="top"
+                  innerPosition="center"
+                  :margin="10"
+                  class="transaction__refund-tip">
+                  Request for refund
+                </UiTip>
+              </div>
+
+            </UiTableCell>
+          </UiTableRow>
+        </UiTable>
+
+        <NoResults type="add-new" v-else>You don’t have any transactions yet</NoResults>
+      </div>
+    </UiPanel>
+
+    <TransactionRefund
+      :showModal="showRefundModal"
+      @close="showRefundModal = false"
+      @input="handleRefund($event)"></TransactionRefund>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.control-bar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status-filter {
+  margin-left: 4px;
+  position: relative;
+  top: 1px;
+}
+
+.transactions-list {
+  margin-top: 32px;
+}
+
+.country-name > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100px;
+}
+
+.transaction {
+  &:hover {
+    background: rgba(61, 123, 245, 0.08);
+    color: #3D7BF5;
+    cursor: pointer;
+  }
+
+  &__refund {
+    position: relative;
+    &-tip {
+      display: none;
+      height: 39px;
+      background: #000;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      text-align: center;
+      line-height: 38px;
+      box-shadow: none;
+
+      &:after {
+        display: block;
+        content: '';
+        width: 6px;
+        height: 6px;
+        position: absolute;
+        bottom: -4px;
+        background: #000000;
+        transform: rotate(45deg);
+      }
+    }
+
+    &:hover &-tip {
+      display: block;
+    }
+  }
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  display: inline-block;
+  position: relative;
+  top: -2px;
+  margin-right: 5px;
+
+  &.green {
+    background: #2fa84f;
+  }
+
+  &.blue {
+    background: #3d7bf5;
+  }
+
+  &.yellow {
+    background: #f3aa18;
+  }
+
+  &.red {
+    background: #ea3d2f;
+  }
+
+  &.transparent {
+    border: 1px solid #919699;
+  }
+}
+
+.status-processed {
+  color: #069697;
+}
+
+.status-refunded {
+  color: #EA3D2F;
+}
+</style>

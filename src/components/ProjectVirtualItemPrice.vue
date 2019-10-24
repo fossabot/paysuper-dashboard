@@ -107,7 +107,7 @@ export default {
     },
 
     async handleSuggestClick(item, closeSuggest) {
-      if (item.id === 'conversion' && this.checkIsValid()) {
+      if (item.id === 'conversion' && find(this.priceData, price => this.isDefault(price)).amount > 0) {
         await this.fillPrice(find(this.priceData, price => this.isDefault(price)).amount);
       }
       closeSuggest();

@@ -46,6 +46,7 @@ export default function createBankingStore() {
         if (response.data) {
           dispatch('User/Merchant/changeMerchant', response.data, { root: true });
           dispatch('User/Merchant/completeStep', 'banking', { root: true });
+          dispatch('User/Notifications/watchForNotifications', null, { root: true });
           return true;
         }
 

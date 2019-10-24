@@ -70,9 +70,10 @@ export default {
   methods: {
     ...mapActions(['setIsLoading', 'uploadImage']),
     ...mapActions('ProjectsListing', [
-      'deactivateProject', 'activateProject', 'fetchProjects',
+      'deactivateProject', 'activateProject', 'fetchProjects', 'createProject',
       'submitFilters', 'initQuery',
     ]),
+    ...mapActions('User/Merchant', ['completeStep']),
 
     updateFiltersFromQuery() {
       this.filters = this.getFilterValues(['quickFilter', 'status']);
@@ -117,6 +118,34 @@ export default {
         this.$_Notifications_showSuccessMessage('Project has been activated');
       } catch (error) {
         this.$_Notifications_showErrorMessage(error);
+      }
+      this.setIsLoading(false);
+    },
+
+    async handleCreateNewProject({ name, image }) {
+      this.isNewProjectModalOpened = false;
+      this.setIsLoading(true);
+      try {
+        const projectId = await this.createProject({
+          name: {
+            en: name,
+          },
+          image,
+        });
+        /**
+         * TODO: after https://protocolone.tpondemand.com/restui/board.aspx?#page=task/191909
+         * remove this and use has_projects attribute from merchant object
+         */
+        this.completeStep('projects');
+        this.$router.push({
+          name: 'Project',
+          params: {
+            id: projectId,
+          },
+        });
+        this.$showSuccessMessage('Project created successfully');
+      } catch (error) {
+        this.$showErrorMessage(error);
       }
       this.setIsLoading(false);
     },
@@ -185,6 +214,7 @@ export default {
     v-if="isNewProjectModalOpened"
     :uploadImage="uploadImage"
     @close="isNewProjectModalOpened = false"
+    @submit="handleCreateNewProject"
   />
 
 </div>

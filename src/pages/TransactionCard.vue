@@ -1,156 +1,93 @@
 <script>
-// import axios from 'axios';
-import moment from 'moment';
-import { PageHeader } from '@protocol-one/ui-kit';
-import Commission from '@/mixins/commission';
+import { mapActions, mapState } from 'vuex';
+import {
+  get, find,
+} from 'lodash-es';
+import { format } from 'date-fns';
+import TransactionPageStore from '@/store/TransactionPageStore';
+import TransactionRefund from '@/components/TransactionRefund.vue';
+
+const STATUS_COLOR = {
+  created: 'blue',
+  processed: 'green',
+  pending: 'orange',
+  refunded: 'red',
+  chargeback: 'red',
+  rejected: 'transparent',
+  canceled: 'transparent',
+};
 
 export default {
-  mixins: [Commission],
-  components: {
-    PageHeader,
-  },
-  asyncData() {
-    // const self = this;
+  name: 'transactionsCard',
+  components: { TransactionRefund },
 
-    // const url = `${process.env.VUE_APP_P1PAYAPI_URL}/api/v1/s/order/${context.route.params.id}`;
-
-    // return axios.get(
-    //   url,
-    // )
-    //   .then((response) => {
-    //     if (!response.data) {
-    //       return undefined;
-    //     }
-
-    //     return {
-    //       order: response.data,
-    //     };
-    //   }).catch((e) => {
-    //     self.error(self.getErrorMessage(e));
-    //     self.$router.push('/transactions');
-    //   });
-  },
   data() {
     return {
-      order: {
-        id: '5c4b37a6f92fe5000189acd8',
-        project: {
-          id: '5c5d8ef821c3fd0001652f90',
-          name: 'Universe of Futurama',
-        },
-        account: '',
-        order_id: '',
-        payer_data: {
-          ip: '77.233.9.26',
-          country_code_a2: 'RU',
-          country_name: {
-            en: 'Russia',
-            ru: 'Россия',
-          },
-          city: {
-            en: 'Krasnodar',
-            ru: 'Краснодар',
-          },
-          subdivision: 'KDA',
-          timezone: 'Europe/Moscow',
-        },
-        payment_requisites: null,
-        payment_method: null,
-        project_amount_income: {
-          amount: 10,
-          currency: {
-            code_int: 840,
-            code_a3: 'USD',
-            name: [Object],
-          },
-        },
-        project_amount_outcome: null,
-        payment_method_amount_income: null,
-        fixed_package: {
-          id: 'nibbler',
-          region: 'US',
-          name: 'Nibbler',
-          currency_int: 840,
-          price: 10,
-        },
-        status: {
-          status: 2,
-          name: 'Error',
-          description: 'Payment system reject create order request.',
-        },
-        created_at: 1548433318,
-        confirmed_at: 1550863432,
-        closed_at: 0,
-        psp_fee: null,
-        ps_fee_amount: null,
-        project_fee_amount: null,
-        to_payer_fee_amount: null,
-        vat_amount: 0,
-      },
-
+      colors: STATUS_COLOR,
+      showRefundModal: false,
     };
   },
-  methods: {
-    getPayerData(key) {
-      let val = '&mdash;';
 
-      if (this.order.payer_data && this.order.payer_data[key]
-                    && this.order.payer_data[key].length > 0) {
-        val = this.order.payer_data[key];
-      }
+  async asyncData({ store, registerStoreModule, route }) {
+    try {
+      await registerStoreModule('TransactionPage', TransactionPageStore, {
+        transactionId: route.params.transactionId,
+      }).catch(this.$showErrorMessage);
+    } catch (error) {
+      store.dispatch('setPageError', error);
+    }
+  },
 
-      return val;
+  computed: {
+    ...mapState('TransactionPage', ['transaction', 'refunds']),
+
+    refundAvailable() {
+      const badStatus = [
+        'canceled',
+        'refunded',
+        'rejected',
+        'chargeback',
+      ];
+      return !badStatus.includes(this.transaction.status);
+    },
+
+    // the refund process has started
+    hasRefund() {
+      return !!this.refunds.items;
     },
   },
-  computed: {
-    breadcrumbs() {
-      return [
-        {
-          label: 'Transactions search',
-          url: '/transactions/',
-          router: true,
-        },
-      ];
-    },
-    externalId() {
-      return this.order.order_id && this.order.order_id.length > 0
-        ? this.order.order_id : '&mdash;';
-    },
-    createDate() {
-      return moment.unix(this.order.created_at).format('YYYY-MM-DD hh:mm:ss');
-    },
-    paymentDate() {
-      if (!this.order.confirmed_at || this.order.confirmed_at === null) {
-        return '&mdash;';
+
+  methods: {
+    ...mapActions(['setIsLoading']),
+    ...mapActions('TransactionPage', ['refund']),
+
+    get,
+
+    getProductName(items) {
+      if (items === null) {
+        return 'Checkout';
       }
 
-      return moment.unix(this.order.confirmed_at).format('YYYY-MM-DD hh:mm:ss');
-    },
-    product() {
-      let val = '&mdash;';
-
-      if (this.order.fixed_package && this.order.fixed_package !== null
-                    && this.order.fixed_package.name) {
-        val = this.order.fixed_package.name;
+      if (items.length > 1) {
+        return 'Product';
       }
 
-      return val;
+      return items[0].name;
     },
-    projectLink() {
-      return `/projects/${this.order.project.id}`;
-    },
-    paymentMethod() {
-      let val = '&mdash;';
 
-      if (this.order.payment_method && this.order.payment_method !== null) {
-        val = this.order.payment_method.name;
-      }
-
-      return val;
+    getCountryByCode(code) {
+      return get(find(this.countries, ({ value }) => value === code), 'label', code);
     },
-    hasPaymentDetails() {
-      return this.order.payment_requisites
-                    && Object.keys(this.order.payment_requisites).length > 0;
+
+    formatDateAndTime(seconds) {
+      const datetime = new Date(seconds * 1000);
+      return format(datetime, 'dd.MM.yyyy, HH:mm:ss');
+    },
+
+    async handleRefund(reason) {
+      this.setIsLoading(true);
+      await this.refund({ transaction: this.transaction, reason }).catch(this.$showErrorMessage);
+      this.setIsLoading(false);
     },
   },
 };
@@ -158,258 +95,207 @@ export default {
 
 <template>
   <div>
-    <PageHeader :breadcrumbs="breadcrumbs">
-      <span slot="title">Transaction #{{order.id}}</span>
-    </PageHeader>
-    <div class="characteristic-container">
-      <div>
-        <h2>Transaction details</h2>
+    <UiPageHeaderFrame class="transaction-page-header">
+      <template slot="title">
+        Transaction {{ transaction.transaction }}
+      </template>
+      <span slot="description">
+        <UiLabelTag :color="colors[transaction.status]">{{transaction.status}}</UiLabelTag>
+      </span>
+      <UiButton
+        slot="picture"
+        color="blue"
+        class="refund-button"
+        v-if="refundAvailable"
+        :isTransparent="true"
+        :disabled="hasRefund"
+        @click="showRefundModal = true">
+        REFUND
+      </UiButton>
+    </UiPageHeaderFrame>
 
-        <dl class="characteristic-group">
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">ID</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ order['id'] }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Create date</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ createDate }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Payment date</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="paymentDate"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">External ID</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="externalId"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Amount</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ getAmount(order) }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Account</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ order['account'] }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Product</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="product"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Project</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">
-              <router-link :to="projectLink">{{ order['project']['name'] }}</router-link>
-            </span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Payment method</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="paymentMethod"></span>
-          </dd>
-        </dl>
-      </div>
+    <TransactionRefund
+      :showModal="showRefundModal"
+      @close="showRefundModal = false"
+      @input="handleRefund($event)"></TransactionRefund>
 
-      <div>
-        <h2>Status</h2>
-
-        <dl class="characteristic-group">
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Status</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ order['status']['name'] }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Description</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ order['status']['description'] }}</span>
-          </dd>
-        </dl>
-      </div>
-
-      <div>
-        <h2>Amount details</h2>
-
-        <dl class="characteristic-group">
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Payment amount</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ getAmount(order) }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">P1 Fee</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-              v-html="getCommission(order, 'psp_fee')"
-            ></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Payment System Fee</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-              v-html="getCommission(order, 'ps_fee_amount')"
-            ></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">VAT</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-              v-html="getCommission(order, 'vat_amount')"
-            ></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Commission to payer</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-              v-html="getCommission(order, 'to_payer_fee_amount')"
-            ></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Total commission</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-              v-html="getCommission(order, 'project_fee_amount')"
-            ></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Payout amount</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="getPayout(order)"></span>
-          </dd>
-        </dl>
-      </div>
-
-      <div>
-        <h2>User details</h2>
-
-        <dl class="characteristic-group">
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Account</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value">{{ order['account'] }}</span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Email</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="getPayerData('email')"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Phone</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="getPayerData('phone')"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">IP</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span class="characteristic-value-value" v-html="getPayerData('ip')"></span>
-          </dd>
-          <dt class="characteristic-name">
-            <span class="characteristic-name-value">Country, City</span>
-          </dt>
-          <dd class="characteristic-value">
-            <span
-              class="characteristic-value-value"
-            >
-              {{
-                order['payer_data']['country_name']['en'] + ', ' +
-                order['payer_data']['city']['en']
-              }}
-            </span>
-          </dd>
-        </dl>
-      </div>
-
-      <div v-if="hasPaymentDetails">
-        <h2>Payment details</h2>
-
-        <dl class="characteristic-group">
-          <div v-for="(v, k) in order['payment_requisites']" :key="k">
-            <dt class="characteristic-name">
-              <span class="characteristic-name-value">{{ k }}</span>
-            </dt>
-            <dd class="characteristic-value">
-              <span class="characteristic-value-value">{{ v }}</span>
-            </dd>
+    <UiPanel>
+      <div class="details">
+        <UiHeader level="3" class="details__header">Transaction details</UiHeader>
+        <div class="details__container">
+          <div class="details__item">
+            <div class="details__item--label">Payment date</div>
+            <div class="details__item--info">
+              {{ formatDateAndTime(transaction.created_at.seconds) }}
+            </div>
           </div>
-        </dl>
+          <div class="details__item">
+            <div class="details__item--label">Net amount</div>
+            <div class="details__item--info">
+              {{ $formatPrice(transaction.total_payment_amount, transaction.currency) }}
+            </div>
+          </div>
+          <div class="products" v-if="transaction.items && transaction.items.length > 1">
+            <UiTable>
+              <UiTableRow :isHead="true">
+                <UiTableCell width="50%" align="left" class="products__head">
+                  Products
+                </UiTableCell>
+                <UiTableCell width="50%" align="left" class="products__head products__shift">
+                  Product price
+                </UiTableCell>
+              </UiTableRow>
+              <UiTableRow v-for="(product, index) in transaction.items" :key="index">
+                <UiTableCell align="left" class="products__cell">{{product.name}}</UiTableCell>
+                <UiTableCell align="left" class="products__cell products__shift">
+                  {{ $formatPrice(product.amount, product.currency) }}
+                </UiTableCell>
+              </UiTableRow>
+            </UiTable>
+          </div>
+          <div class="details__item" v-else>
+            <div class="details__item--label">Products</div>
+            <div class="details__item--info">
+              {{ getProductName(transaction.items) }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Project</div>
+            <div class="details__item--info">
+              {{ transaction.project.name.en }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Payment method</div>
+            <div class="details__item--info">
+              {{ transaction.payment_method.title }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Country</div>
+            <div class="details__item--info">
+              {{ getCountryByCode(transaction.country_code) }}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="details">
+        <UiHeader level="3" class="details__header">User info</UiHeader>
+        <div class="details__container">
+          <div class="details__item">
+            <div class="details__item--label">User ID</div>
+            <div class="details__item--info">
+              {{ transaction.user.id }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">IP</div>
+            <div class="details__item--info">
+              {{ transaction.user.ip }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Country</div>
+            <div class="details__item--info">
+              {{ transaction.user.address.country }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" v-if="transaction.payment_method && transaction.payment_method.card">
+        <UiHeader level="3" class="details__header">Payment details</UiHeader>
+        <div class="details__container">
+          <div class="details__item">
+            <div class="details__item--label">Type of card</div>
+            <div class="details__item--info">
+              {{ transaction.payment_method.card.brand }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Card expiry month/year</div>
+            <div class="details__item--info">
+              {{ transaction.payment_method.card.expiry_month }}
+              /
+              {{ transaction.payment_method.card.expiry_year }}
+            </div>
+          </div>
+          <div class="details__item">
+            <div class="details__item--label">Card number</div>
+            <div class="details__item--info">
+              {{ transaction.payment_method.card.masked }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </UiPanel>
   </div>
 </template>
 
-<style lang="scss">
-.characteristic-container {
+<style lang="scss" scoped>
+.transaction-page-header{
   position: relative;
-  width: 100%;
-  padding: 15px;
 }
 
-.characteristic-group {
-  position: relative;
-  margin: 0 30px;
-  padding: 10px 0 20px;
+.refund-button {
+  width: 140px;
+  height: 40px;
+  position: absolute !important;
+  top: 20px;
+  right: 0;
+}
 
-  .characteristic-name {
-    display: inline-block;
-    width: 48%;
-    margin: 0 0 7px;
-    vertical-align: top;
-    background: #ffffff;
+.details {
+  border-bottom: 1px solid rgba(227, 229, 230, .8);
+  margin-bottom: 32px;
 
-    .characteristic-name-value {
-      position: relative;
-      padding: 0 10px 0 0;
-      background: inherit;
-      z-index: 2;
+  &__header {
+    margin-bottom: 16px;
+  }
+
+  &__container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  &__item {
+    flex-basis: 50%;
+    padding: 0 0 20px 12px;
+
+    &--label {
+      color: #5E6366;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    &--info {
+      color: #000;
+      letter-spacing: 0.44px;
     }
   }
 
-  .characteristic-value {
-    display: inline-block;
-    width: 50%;
-    margin: 0 0 7px;
-    vertical-align: bottom;
-    background: #ffffff;
+  .products {
+    flex-basis: 100%;
+    width: 100%;
+    padding: 0 0 20px 12px;
 
-    .characteristic-value-value {
-      position: relative;
-      display: block;
-      padding: 0 0 0 10px;
-      background: inherit;
-      z-index: 2;
+    &__head {
+      color: #5E6366;
+      font-size: 12px;
+      padding: 0;
+      border-bottom: none;
+    }
+
+    &__cell {
+      color: #000;
+      letter-spacing: 0.44px;
+      padding: 10px 0;
+      border-bottom: 1px dashed #C6CACC;
+    }
+
+    &__shift {
+      padding-left: 5px;
     }
   }
 }

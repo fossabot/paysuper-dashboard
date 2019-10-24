@@ -58,6 +58,16 @@ router.beforeResolve(async (to, from, next) => {
         query: { redirect: to.fullPath },
       });
     }
+    if (to.name !== 'UserProfile' && !store.state.User.isEmailConfirmed) {
+      return next({
+        name: 'UserProfile',
+      });
+    }
+    if (to.name === 'UserProfile' && store.state.User.isEmailConfirmed) {
+      return next({
+        name: 'Dashboard',
+      });
+    }
   }
 
   const matched = router.getMatchedComponents(to);

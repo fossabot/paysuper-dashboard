@@ -11,4 +11,10 @@ server {
     location ~* ^/auth1/(login|logout|refresh|callback)(.*)$ {
         proxy_pass ${APP};
     }
+    location ~* ^/conf(.*)$ {
+        proxy_pass ${APP};
+    }
+    location ~* ^/order(.*)$ {
+        proxy_pass ${APP};
+    }
 }

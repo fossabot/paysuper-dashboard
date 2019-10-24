@@ -11,6 +11,7 @@ ingress:
    - /auth1/
    - /conf/
    - /upload_file
+   - /order
   pathFrontend: 
    - /
 

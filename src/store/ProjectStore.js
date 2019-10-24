@@ -132,21 +132,6 @@ export default function createProjectStore() {
         commit('projectPublicName', state.project.name);
       },
 
-      async createProject({
-        state, commit, rootState,
-      }, project) {
-        const response = await axios.post(
-          `${rootState.config.apiUrl}/admin/api/v1/projects`,
-          mapDataFormToApi({
-            merchant_id: rootState.User.Merchant.merchant.id,
-            ...project,
-          }),
-        );
-
-        commit('project', mapDataApiToForm(response.data.item));
-        commit('projectPublicName', state.project.name);
-      },
-
       async saveProject({ state, commit, rootState }, project) {
         await axios.patch(
           `${rootState.config.apiUrl}/admin/api/v1/projects/${state.project.id}`,

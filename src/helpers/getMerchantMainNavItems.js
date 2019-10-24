@@ -1,4 +1,4 @@
-export default function getMerchantMainNavItems() {
+export default function getMerchantMainNavItems({ hasMerchant }) {
   return [
     {
       additional: 'Homepage for main controls',
@@ -10,11 +10,12 @@ export default function getMerchantMainNavItems() {
     },
     {
       additional: 'Organise your products for sales',
+      unavailableReason: 'Need to start signing agreement',
       icon: 'IconFolder',
       link: '/projects',
       title: 'Projects',
       routeNames: ['ProjectsList'],
-      isAvailable: true,
+      isAvailable: hasMerchant,
     },
     {
       additional: 'Your weekly royalty reports',

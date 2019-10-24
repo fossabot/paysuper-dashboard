@@ -1,5 +1,6 @@
 <script>
 import ClickOutside from 'vue-click-outside';
+import { has } from 'lodash-es';
 
 export default {
   name: 'UiStatusFilter',
@@ -10,16 +11,20 @@ export default {
 
   props: {
     value: {
-      type: String,
+      type: [String, Object],
       default: 'all',
-    },
-    countsByStatus: {
-      type: Object,
-      default: null,
     },
     scheme: {
       type: Object,
       required: true,
+    },
+    multilevel: {
+      type: Boolean,
+      default: false,
+    },
+    countsByStatus: {
+      type: Object,
+      default: null,
     },
   },
 
@@ -30,6 +35,14 @@ export default {
     };
   },
 
+  watch: {
+    isDropdownOpened(value) {
+      if (!value) {
+        Object.keys(this.statusesList).forEach((key) => { this.statusesList[key].expand = false; });
+      }
+    },
+  },
+
   methods: {
     getItemClass(item, value) {
       return [
@@ -38,16 +51,35 @@ export default {
         value === item.value ? '_current' : '',
       ];
     },
+
+    getChildClass(item, parent) {
+      return [
+        item.value ? `_${item.value}` : '',
+        item.color ? `_${item.color}` : '',
+        this.value[parent.value].includes(item.value) ? '_current' : '',
+      ];
+    },
+
+    handleClick(item) {
+      if (has(item, 'expand')) {
+        item.expand = !item.expand;
+      } else {
+        this.$emit('input', item.value);
+      }
+    },
+
+    handleLevelTwoClick(item, child) {
+      this.$emit('inputSecondLevel', { filter: item.value, value: child.value });
+    },
   },
 };
 </script>
 
 <template>
-  <div class="status-filter">
+  <div class="status-filter" v-click-outside="() => isDropdownOpened = false">
     <div
       class="button"
       :class="{ '_opened': isDropdownOpened }"
-      v-click-outside="() => isDropdownOpened = false"
       @click="isDropdownOpened = !isDropdownOpened"
     >
       <IconDropdownMenu />
@@ -57,6 +89,7 @@ export default {
       innerPosition="right"
       position="bottom"
       width="200px"
+      :margin="4"
       :visible="isDropdownOpened"
       :closeDelay="0"
       :stayOpenedOnHover="false"
@@ -66,8 +99,8 @@ export default {
           class="status"
           v-for="(item, index) in statusesList"
           :key="index"
-          :class="getItemClass(item, value)"
-          @click="$emit('input', item.value)"
+          :class="[getItemClass(item, value), { 'has-child': item.children }]"
+          @click="handleClick(item)"
         >
           <component
             class="status-icon"
@@ -77,10 +110,28 @@ export default {
           {{item.text}}
           <span
             class="status-count"
-            v-if="countsByStatus"
-          >
-          ({{ countsByStatus[item.value] || 0 }})
-        </span>
+            v-if="countsByStatus && countsByStatus[item.value]"
+            >
+            {{ countsByStatus[item.value] }}
+          </span>
+          <div class="triangle" v-if="item.children"></div>
+          <UiTip
+            class="dropdown-child dropdown-content"
+            position="bottom"
+            innerPosition="left"
+            width="200px"
+            :margin="0"
+            :visible="item.expand"
+            v-if="item.children">
+            <div
+              @click="handleLevelTwoClick(item, child)"
+              class="status"
+              v-for="(child, index) in item.children"
+              :class="getChildClass(child, item)"
+              :key="index">
+              {{ child.text }}
+            </div>
+          </UiTip>
         </div>
       </div>
     </UiTip>
@@ -126,6 +177,11 @@ export default {
 
 .dropdown {
   top: calc(100% + 4px);
+
+  &-child {
+    left: 200px !important;
+    top: -10px !important;
+  }
 }
 
 .dropdown-content {
@@ -146,6 +202,10 @@ export default {
     cursor: pointer;
     background: rgba(61, 123, 245, 0.08);
     color: #3d7bf5;
+
+    .triangle {
+      border-color: transparent transparent transparent #3D7BF5;
+    }
   }
 
   &::before {
@@ -209,8 +269,30 @@ export default {
   top: 12px;
 }
 .status-count {
-  color: #919699;
-  margin-left: 4px;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0 0 0 1px;
+  border-radius: 50%;
+  position: absolute;
+  right: 30px;
+  top: 6px;
+  color: #fff;
+  background: #3D7BF5;
+  font-size: 9px;
+}
+
+.triangle {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 4.0px 0 4.0px 4.0px;
+  border-color: transparent transparent transparent rgb(0,0,0);
 }
 </style>

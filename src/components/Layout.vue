@@ -30,6 +30,7 @@ export default {
   computed: {
     ...mapState(['isLoading']),
     ...mapState('User', ['role']),
+    ...mapState('User/Merchant', ['merchant']),
     currentNavigationItem() {
       return findIndex(this.mainNavItems, item => includes(item.routeNames, this.$route.name));
     },
@@ -38,7 +39,9 @@ export default {
       if (this.role === 'admin') {
         return getAdminMainNavItems();
       }
-      return getMerchantMainNavItems();
+      return getMerchantMainNavItems({
+        hasMerchant: this.merchant ? !!this.merchant.id : false,
+      });
     },
   },
   mounted() {

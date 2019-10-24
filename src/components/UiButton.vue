@@ -183,12 +183,6 @@ $primary-button-size: 14px;
     }
   }
 
-  &._disabled {
-    background-color: $disabled-button-color;
-    pointer-events: none;
-    color: $disabled-font-color;
-  }
-
   &._rounded {
     border-radius: 20px;
 
@@ -206,6 +200,13 @@ $primary-button-size: 14px;
       background-color: $transparentHoverBoxColor;
       color: $transparentHoverColor;
     }
+  }
+
+  &._disabled {
+    background-color: $disabled-button-color;
+    border-color: $disabled-font-color;
+    pointer-events: none;
+    color: $disabled-font-color;
   }
 
   &._tiny {

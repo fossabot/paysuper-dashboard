@@ -18,6 +18,7 @@ export default {
     try {
       await registerStoreModule('MerchanstList', MerchanstListStore, {
         query: route.query,
+        page: 'merchantsList',
       });
     } catch (error) {
       store.dispatch('setPageError', error);

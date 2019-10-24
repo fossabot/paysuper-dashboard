@@ -224,17 +224,6 @@ $left-indent: 12px;
   position: relative;
   width: 100%;
 
-  &._focused,
-  &:not(._focused):not(._empty) {
-    .label {
-      width: 50%;
-      transform: translateY(-24px) scale(0.75, 0.75);
-      color: $secondary-input-color;
-      padding-left: 0;
-      margin-left: $left-indent;
-    }
-  }
-
   &._focused {
     pointer-events: auto;
 
@@ -365,21 +354,17 @@ $left-indent: 12px;
   color: $secondary-input-color;
   line-height: 32px;
   margin: 0;
-  overflow: hidden;
   position: absolute;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .label {
   font-size: $primary-input-size;
   left: 0;
-  pointer-events: none;
-  top: 24px;
-  transform-origin: left;
-  transition: transform 0.2s ease-out, color 0.2s linear, width 0.1s ease-out;
+  top: 6px;
   width: 100%;
   height: 32px;
-  padding-left: $left-indent;
+  font-size: 12px;
+  line-height: 16px;
+  margin-left: $left-indent;
 
   &._required {
     &:after {

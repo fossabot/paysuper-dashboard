@@ -46,6 +46,7 @@ export default {
       isSkuUnique: true,
       langs: ['en', 'ru'],
       item: null,
+      image: null,
     };
   },
 
@@ -65,7 +66,7 @@ export default {
           [currency, region] = name.split('-');
         }
         return {
-          amount: 0,
+          amount: null,
           currency,
           region,
         };
@@ -74,15 +75,6 @@ export default {
 
     projectId() {
       return this.$route.params.id;
-    },
-
-    image: {
-      get() {
-        return get(this.item, 'images.0', '');
-      },
-      set(value) {
-        this.item.images = [value];
-      },
     },
   },
 
@@ -133,6 +125,7 @@ export default {
       this.item.prices = this.mapCurrencies;
       this.item.pricing = 'manual';
     }
+    this.image = get(this.item, 'images.0', '');
   },
 
   methods: {
@@ -158,14 +151,19 @@ export default {
         type: 'simple_product',
         default_currency: 'USD',
       };
-      if (this.isNewItem) {
-        await this.createItem({ data, projectId: this.projectId }).catch(this.$showErrorMessage);
-      } else {
-        data.id = this.virtualItem.id;
-        await this.editItem({ data, projectId: this.projectId }).catch(this.$showErrorMessage);
+      try {
+        if (this.isNewItem) {
+          await this.createItem({ data, projectId: this.projectId });
+        } else {
+          data.id = this.virtualItem.id;
+          await this.editItem({ data, projectId: this.projectId });
+        }
+        this.$showSuccessMessage('Saved successfully');
+        this.$navigate(`/projects/${this.project.id}/virtual-items/`);
+      } catch (e) {
+        this.$showErrorMessage(e);
       }
       this.setIsLoading(false);
-      this.$showSuccessMessage('Saved successfully');
     },
 
     handleSkuFieldInput: debounce(
@@ -247,6 +245,7 @@ export default {
         </p>
 
         <ProjectVirtualItemPrice
+          ref="pricesBlock"
           :method="item.pricing"
           :prices="item.prices"
           @updatePrice="handleUpdatePrice"/>

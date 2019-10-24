@@ -22,6 +22,11 @@ export default {
   },
 
   data() {
+    const unsignedStatuses = map(merchantStatusScheme, (item, key) => ({
+      ...item,
+      code: key,
+    })).filter(item => item.value !== 'signed');
+
     return {
       isDropdownOpened: false,
       statusesList: [
@@ -29,10 +34,7 @@ export default {
           label: 'All requests',
           value: 'all',
         },
-        ...map(merchantStatusScheme, (item, key) => ({
-          ...item,
-          code: key,
-        })),
+        ...unsignedStatuses,
       ],
     };
   },

@@ -87,7 +87,7 @@ export default {
       // https://dm4t2.github.io/vue-currency-input/config/
       numericOptions: {
         currency: null,
-        distractionFree: false,
+        distractionFree: true, // false is buggy in safari
         locale: 'en',
         autoDecimalMode: false,
         min: null,
@@ -260,6 +260,9 @@ $left-indent: 12px;
   padding: 0 0 0 12px;
   transition: border-color 0.2s ease-out;
   width: 100%;
+  // for ios
+  -webkit-appearance: none;
+  border-radius: 0;
 
   &:focus {
     border-color: $focus-input-color;

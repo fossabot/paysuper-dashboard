@@ -3,10 +3,10 @@ import Vuex from 'vuex';
 import axios from 'axios';
 import { get, union } from 'lodash-es';
 
+import resources from '@/resources';
 import DictionariesStore from './DictionariesStore';
 import LeaveFeedbackStore from './LeaveFeedbackStore';
 import UserStore from './UserStore';
-import resources from '@/resources';
 
 Vue.use(Vuex);
 
@@ -97,10 +97,10 @@ export default new Vuex.Store({
       }
     },
 
-    async uploadImage({ rootState }, imagefile) {
+    async uploadImage(ctx, imagefile) {
       const formData = new FormData();
       formData.append('file', imagefile);
-      const { data } = await axios.post(`${rootState.config.ownBackendUrl}/upload_file`, formData, {
+      const { data } = await axios.post('{ownBackendUrl}/upload_file', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

@@ -41,6 +41,7 @@ export default function createContactsStore() {
         if (response.data) {
           dispatch('User/Merchant/changeMerchant', response.data, { root: true });
           dispatch('User/Merchant/completeStep', 'contacts', { root: true });
+          dispatch('User/Notifications/watchForNotifications', null, { root: true });
           return true;
         }
 
