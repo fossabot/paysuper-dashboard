@@ -1,17 +1,19 @@
 <script>
-import { cloneDeep, isEqual } from 'lodash-es';
 import { mapState, mapActions } from 'vuex';
 import ProjectStore from '@/store/ProjectStore';
 import SaveDataWarningModal from '@/components/SaveDataWarningModal.vue';
+import { DEFAULT_CURRENCY_IS_NOT_SET } from '@/errors';
 
 export default {
-  name: 'ProjectCard',
+  name: 'ProjectPage',
 
   components: {
     SaveDataWarningModal,
   },
 
-  async asyncData({ store, registerStoreModule, route }) {
+  async asyncData({
+    store, registerStoreModule, route, resources,
+  }) {
     try {
       await registerStoreModule('Project', ProjectStore, {
         id: route.params.id,
@@ -19,51 +21,32 @@ export default {
         image: route.query.image,
       });
     } catch (error) {
-      store.dispatch('setPageError', error);
+      if (error === DEFAULT_CURRENCY_IS_NOT_SET) {
+        store.dispatch('setPageError', 403);
+        resources.notifications.showErrorMessage(error);
+      } else {
+        store.dispatch('setPageError', error);
+      }
     }
   },
 
   data() {
     return {
-      projectLocal: null,
-      defaultStep: 'settings',
-      currentStep: '',
-      routNextCallback: null,
-
       isUnsavedDataModalOpened: false,
     };
   },
 
   computed: {
-    ...mapState('Project', ['project', 'currencies']),
+    ...mapState('Project', ['project']),
   },
 
   async beforeRouteUpdate(to, from, next) {
     if (to.params.id !== from.params.id) {
       this.setIsLoading(true);
       await this.initState({ id: to.params.id });
-      this.updateProjectLocal();
       this.setIsLoading(false);
     }
     next();
-  },
-
-  async beforeRouteLeave(to, from, next) {
-    if (isEqual(this.project, this.projectLocal)) {
-      next();
-      return;
-    }
-    try {
-      await this.confirmDataSaved();
-      next(false);
-      this.handleSaveProject();
-    } catch (error) {
-      next();
-    }
-  },
-
-  created() {
-    this.updateProjectLocal();
   },
 
   methods: {
@@ -73,15 +56,10 @@ export default {
       'saveProject',
     ]),
 
-    updateProjectLocal() {
-      this.projectLocal = cloneDeep(this.project);
-    },
-
-    async handleSaveProject() {
+    async handleSaveProject(project) {
       this.setIsLoading(true);
       try {
-        await this.saveProject(this.projectLocal);
-        this.updateProjectLocal();
+        await this.saveProject(project);
         this.$showSuccessMessage('Project saved successfully');
       } catch (error) {
         this.$showErrorMessage(error);
@@ -109,10 +87,7 @@ export default {
 <template>
 <div>
   <RouterView
-    v-bind="{
-      uploadImage,
-      project: projectLocal,
-    }"
+    v-bind="{ confirmDataSaved }"
     @save="handleSaveProject"
   />
   <SaveDataWarningModal

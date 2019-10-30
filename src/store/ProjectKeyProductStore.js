@@ -19,7 +19,6 @@ function mapDataApiToForm(data) {
       ru: '',
       en: '',
     },
-    default_currency: 'USD',
     object: 'key_product',
     platforms: [],
     pricing: 'currency',
@@ -147,11 +146,18 @@ export default function createProjectKeyProductStore() {
         });
       },
 
-      async getRecommendedPrices({ rootState }, { type, amount }) {
+      async getRecommendedPrices(ctx, { type, amount, currency }) {
         assert(type === 'steam' || type === 'conversion');
-        const path = `/api/v1/pricing/recommended/${type}?amount=${amount}`;
-        const response = await axios.get(`${rootState.config.apiUrl}${path}`);
-        return response.data.recommended_price;
+        const path = `/api/v1/pricing/recommended/${type}?amount=${amount}&currency=${currency}`;
+        const { data } = await axios.get(`{apiUrl}${path}`);
+        return data.recommended_price;
+      },
+
+      async getRecommendedPricesTable(ctx, currency) {
+        const { data } = await axios.get(
+          `{apiUrl}/api/v1/pricing/recommended/table?currency=${currency}`,
+        );
+        return data.ranges.map(item => item.to);
       },
     },
 

@@ -1,6 +1,6 @@
 <script>
 import ClickOutside from 'vue-click-outside';
-import { has } from 'lodash-es';
+import { includes, isArray } from 'lodash-es';
 
 export default {
   name: 'UiStatusFilter',
@@ -11,7 +11,7 @@ export default {
 
   props: {
     value: {
-      type: [String, Object],
+      type: [String, Object, Array],
       default: 'all',
     },
     scheme: {
@@ -25,6 +25,16 @@ export default {
     countsByStatus: {
       type: Object,
       default: null,
+    },
+    align: {
+      type: String,
+      default: 'right',
+      validator(value) {
+        return includes(
+          ['right', 'left'],
+          value,
+        );
+      },
     },
   },
 
@@ -45,10 +55,16 @@ export default {
 
   methods: {
     getItemClass(item, value) {
+      let current;
+      if (isArray(this.value)) {
+        current = this.value.includes(item.value) ? '_current' : '';
+      } else {
+        current = value === item.value ? '_current' : '';
+      }
       return [
         item.value ? `_${item.value}` : '',
         item.color ? `_${item.color}` : '',
-        value === item.value ? '_current' : '',
+        current,
       ];
     },
 
@@ -61,7 +77,7 @@ export default {
     },
 
     handleClick(item) {
-      if (has(item, 'expand')) {
+      if (item.children !== undefined) {
         item.expand = !item.expand;
       } else {
         this.$emit('input', item.value);
@@ -86,7 +102,7 @@ export default {
     </div>
     <UiTip
       class="dropdown"
-      innerPosition="right"
+      :innerPosition="align"
       position="bottom"
       width="200px"
       :margin="4"
@@ -230,6 +246,16 @@ export default {
       border: 1px solid #919699;
     }
   }
+  &._grey {
+    &::before {
+      background: #C6CACC;
+    }
+  }
+  &._gray {
+    &::before {
+      background: #919699;
+    }
+  }
   &._blue {
     &::before {
       background: #3d7bf5;
@@ -250,9 +276,19 @@ export default {
       background: #2fa84f;
     }
   }
+  &._cian {
+    &::before {
+      background: #069697;
+    }
+  }
   &._red {
     &::before {
       background: #ea3d2f;
+    }
+  }
+  &._cyan {
+    &::before {
+      background: #069697;
     }
   }
   &._archieved {

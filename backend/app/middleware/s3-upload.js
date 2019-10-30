@@ -2,15 +2,7 @@ const aws = require('aws-sdk');
 const fs = require('fs');
 const _ = require('lodash');
 const uuid = require('uuid');
-const envUtils = require('../utils/env');
-
-const { getEnvVariable } = envUtils;
-const config = {
-  s3AccessKeyId: getEnvVariable('S3_ACCESS_KEY_ID'),
-  s3SecretAccessKey: getEnvVariable('S3_SECRET_ACCESS_KEY'),
-  s3BucketName: getEnvVariable('S3_BUCKET_NAME'),
-  s3Region: getEnvVariable('S3_REGION'),
-};
+const config = require('../../config/config');
 
 const allowedTypes = [
   {

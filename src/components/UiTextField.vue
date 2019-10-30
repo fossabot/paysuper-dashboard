@@ -248,8 +248,7 @@ $left-indent: 12px;
 .input {
   background-color: $input-background-color;
   border-width: 0;
-  border-bottom-width: 1px;
-  border-color: #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
   box-sizing: border-box;
   color: $primary-input-color;
   display: block;

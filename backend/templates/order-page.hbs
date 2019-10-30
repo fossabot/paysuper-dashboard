@@ -26,12 +26,22 @@
         Please enable it to continue.</strong>
     </noscript>
 
-    <div id="p1payone-form"></div>
+  {{#if hasForm}}
+    <div id="paysuper-payment-form"></div>
     
     <script>
-      window.PAYSUPER_ORDER_PARAMS = {{{ orderParams }}}
-      window.PAYSUPER_FORM_OPTIONS = {{{ formOptions }}}
+      window.PAYSUPER_PAYMENT_FORM = {{{ data }}}
     </script>
-    <script src="https://static.protocol.one/paysuper/form/dev/paysuper-form.js"></script>
+    <script src="{{ sdkUrl }}"></script>
+  {{else}}
+    <script>
+      if (window.opener) {
+        window.opener.postMessage({
+          source: 'PAYSUPER_PAYMENT_RESULT_PAGE',
+          result: {{ result }},
+        }, '*');
+      }
+    </script>
+  {{/if}}
   </body>
 </html>

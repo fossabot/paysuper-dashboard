@@ -71,8 +71,8 @@ export default function createProjectVirtualItemPageStore() {
        * @param amount
        * @returns {Promise<*>}
        */
-      async getPrices({ rootState }, amount) {
-        const path = `/api/v1/pricing/recommended/conversion?amount=${amount}`;
+      async getPrices({ rootState }, { amount, currency }) {
+        const path = `/api/v1/pricing/recommended/conversion?amount=${amount}&currency=${currency}`;
         const response = await axios.get(`${rootState.config.apiUrl}${path}`);
         return response.data.recommended_price;
       },

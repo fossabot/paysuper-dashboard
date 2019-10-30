@@ -16,13 +16,6 @@ export default {
     PictureWoomanLooking,
   },
 
-  props: {
-    project: {
-      type: Object,
-      required: true,
-    },
-  },
-
   data() {
     return {
       filters: {},
@@ -47,6 +40,7 @@ export default {
   },
 
   computed: {
+    ...mapState('Project', ['project', 'defaultCurrency']),
     ...mapState('ProjectVirtualItems', ['virtualItems', 'filterValues', 'query', 'apiQuery', 'currentItem']),
     ...mapGetters('ProjectVirtualItems', ['getFilterValues']),
 
@@ -178,8 +172,11 @@ export default {
       this.filterItems();
     },
 
-    getUsdPrice(item) {
-      const price = find(item.prices, { currency: 'USD', region: 'USD' }) || '';
+    getItemPrice(item) {
+      const price = find(item.prices, this.defaultCurrency);
+      if (!price) {
+        return '';
+      }
       return this.$formatPrice(price.amount, price.currency);
     },
   },
@@ -255,8 +252,9 @@ export default {
               <span class="cell-text">{{ item.sku }}</span>
             </UiTableCell>
             <UiTableCell align="left" valign="top" :title="item.prices">
-              <span class="cell-text">
-                {{ getUsdPrice(item) }}
+              <UiNoText v-if="!getItemPrice(item)" />
+              <span v-else class="cell-text">
+                {{ getItemPrice(item) }}
               </span>
             </UiTableCell>
             <UiTableCell align="left" valign="top">
@@ -363,6 +361,9 @@ export default {
 }
 
 .vi-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 6px;
   display: block;
   max-width: 307px;
   overflow: hidden;

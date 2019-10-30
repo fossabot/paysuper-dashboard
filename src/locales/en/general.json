@@ -11,7 +11,8 @@
     "required": "Enter a value",
     "url": "Enter correct URL: it should begin with \"http(s)://\"",
     "wrongFormatType": "Wrong value format type",
-    "uniqueSku": "SKU must be unique within one project"
+    "uniqueSku": "SKU must be unique within one project",
+    "iban": "IBAN value is invalid"
   },
   "orderID": "Order #",
   "account": "Account",

@@ -28,8 +28,7 @@ router
     ctx.body = result;
   })
   .get('/order', async (ctx) => {
-    const body = await orderPage(ctx);
-    ctx.body = body;
+    ctx.body = await orderPage(ctx);
   })
 
   .get(`${auth1RoutesNamespace}/login`, auth1Middleware.login)

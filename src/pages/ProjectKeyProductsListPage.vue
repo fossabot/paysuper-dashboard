@@ -56,7 +56,7 @@ export default {
   },
 
   computed: {
-    ...mapState('Project', ['project']),
+    ...mapState('Project', ['project', 'defaultCurrency']),
     ...mapState('ProjectKeyProductsList', ['gameKeys', 'filterValues', 'query', 'apiQuery']),
     ...mapGetters('ProjectKeyProductsList', ['getFilterValues']),
 
@@ -143,7 +143,7 @@ export default {
     },
 
     getPlatformPrice(platform) {
-      const price = find(platform.prices, { currency: 'USD', region: 'USD' });
+      const price = find(platform.prices, this.defaultCurrency);
       if (!price) {
         return '';
       }
@@ -255,7 +255,10 @@ export default {
             v-for="platform in keyProduct.platforms"
             :key="platform.id"
           >
-            {{ getPlatformPrice(platform) }}
+            <UiNoText v-if="!getPlatformPrice(platform)" />
+            <span v-else>
+              {{ getPlatformPrice(platform) }}
+            </span>
           </UiTableCellUnit>
           <UiNoText v-if="!keyProduct.platforms" />
         </UiTableCell>

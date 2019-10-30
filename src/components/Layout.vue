@@ -40,7 +40,7 @@ export default {
         return getAdminMainNavItems();
       }
       return getMerchantMainNavItems({
-        hasMerchant: this.merchant ? !!this.merchant.id : false,
+        hasDefaultCurrency: !!get(this.merchant, 'banking.currency', false),
       });
     },
   },

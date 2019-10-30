@@ -65,12 +65,12 @@ export default {
 
     dateFilter: {
       get() {
-        return [this.filters.dateFrom || null, this.filters.dateTo || null];
+        return [this.filters.registrationDateFrom || null, this.filters.registrationDateTo || null];
       },
       set(value) {
-        const [dateFrom, dateTo] = value;
-        this.filters.dateFrom = dateFrom;
-        this.filters.dateTo = dateTo;
+        const [registrationDateFrom, registrationDateTo] = value;
+        this.filters.registrationDateFrom = registrationDateFrom;
+        this.filters.registrationDateTo = registrationDateTo;
       },
     },
   },
@@ -84,7 +84,9 @@ export default {
     get,
 
     updateFiltersFromQuery() {
-      this.filters = this.getFilterValues(['quickFilter', 'offset', 'limit', 'dateFrom', 'dateTo']);
+      this.filters = this.getFilterValues([
+        'quickFilter', 'offset', 'limit', 'registrationDateFrom', 'registrationDateTo',
+      ]);
     },
 
     filterMerchants() {
@@ -233,9 +235,9 @@ export default {
         <UiTableCell align="left">
           <span
             class="cell-text"
-            :class="{'_empty': !merchant.created_at}"
+            :class="{'_empty': !get(merchant, 'user.registration_date')}"
           >
-            {{$formatDate(merchant.created_at, 'dd.MM.yy') || '—'}}
+            {{$formatDate(get(merchant, 'user.registration_date'), 'dd.MM.yy') || '—'}}
           </span>
           <span class="cell-text"></span>
         </UiTableCell>

@@ -1,4 +1,4 @@
-<template functional>
+<template>
 <span class="ui-no-text">—</span>
 </template>
 

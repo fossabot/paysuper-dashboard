@@ -2,6 +2,7 @@
 import { required } from 'vuelidate/lib/validators';
 import { mapKeys, mapValues, findKey } from 'lodash-es';
 import PriceSuggestTable from '@/components/PriceSuggestTable.vue';
+import { getCurrencyValueFromItem } from '@/helpers/currencyDataConversion';
 
 export default {
   name: 'ProjectKeyProductPriceBlock',
@@ -14,6 +15,14 @@ export default {
       type: Array,
     },
     currencies: {
+      required: true,
+      type: Array,
+    },
+    defaultCurrency: {
+      required: true,
+      type: Object,
+    },
+    recommendedPricesTable: {
       required: true,
       type: Array,
     },
@@ -42,18 +51,21 @@ export default {
   },
 
   computed: {
+    defaultCurrencyValue() {
+      return getCurrencyValueFromItem(this.defaultCurrency);
+    },
     currentPlatformPricing() {
       return this.platforms[this.currentPlatformPricingIndex];
     },
 
     priceModel() {
-      return mapKeys(this.currentPlatformPricing.prices, item => `${item.currency}-${item.region}`);
+      return mapKeys(this.currentPlatformPricing.prices, item => getCurrencyValueFromItem(item));
     },
 
     currenciesPrimary() {
       return this.currencies
         .filter(item => item.currency === item.region)
-        .filter(item => item.currency !== 'USD');
+        .filter(item => getCurrencyValueFromItem(item) !== this.defaultCurrencyValue);
     },
     currenciesSecondary() {
       return this.currencies.filter(item => item.currency !== item.region);
@@ -108,7 +120,7 @@ export default {
       } else if (item.id === 'conversion') {
         this.$emit('fillConvertedPrices', {
           platformId: this.currentPlatformPricing.id,
-          amount: this.priceModel['USD-USD'].amount,
+          amount: this.priceModel[this.defaultCurrencyValue].amount,
           closeSuggest,
         });
       } else {
@@ -134,7 +146,7 @@ export default {
     },
 
     getPriceId(item) {
-      return `${item.currency}-${item.region}`;
+      return getCurrencyValueFromItem(item);
     },
   },
 };
@@ -149,18 +161,19 @@ export default {
   />
 
   <UiTextField
-    label="USD, Default currency"
+    :label="`${defaultCurrencyValue}, Default currency`"
     autocomplete="new-password"
     :isNumeric="true"
     :decimalLength="2"
-    v-bind="$getValidatedFieldProps('priceModel[USD-USD].amount')"
-    v-model="priceModel['USD-USD'].amount"
+    v-bind="$getValidatedFieldProps(`priceModel[${defaultCurrencyValue}].amount`)"
+    v-model="priceModel[defaultCurrencyValue].amount"
     @suggestClosed="isSteamSuggestOpened = false"
   >
     <template v-slot:suggest="{ closeSuggest }">
       <div>
         <PriceSuggestTable
           v-show="isSteamSuggestOpened"
+          :items="recommendedPricesTable"
           @close="closeSuggest"
           @select="handleSteamPriceSelect($event, closeSuggest)"
         />

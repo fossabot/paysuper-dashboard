@@ -1,6 +1,6 @@
 <script>
 import { mapState } from 'vuex';
-import { findIndex, includes } from 'lodash-es';
+import { findIndex, includes, get } from 'lodash-es';
 import LayoutMainNavInnerBase from '@/components/LayoutMainNavInnerBase.vue';
 
 export default {
@@ -19,8 +19,18 @@ export default {
         {
           title: 'Sales options',
           icon: 'IconMoney',
-          url: `/projects/${projectId}/virtual-currency/`,
-          routeNames: ['ProjectVirtualCurrency', 'ProjectKeyProductsList'],
+          url: `/projects/${projectId}/sales-options/`,
+          routeNames: [
+            'ProjectSalesOptions', 'ProjectVirtualItems',
+            'ProjectVirtualCurrency', 'ProjectKeyProductsList',
+          ],
+          available: true,
+        },
+        {
+          title: 'Webhooks',
+          icon: 'IconLabel',
+          url: `/projects/${projectId}/webhooks/`,
+          routeNames: ['ProjectWebhooks'],
           available: true,
         },
         {
@@ -28,13 +38,6 @@ export default {
           icon: 'IconSettings',
           url: `/projects/${projectId}/settings/`,
           routeNames: ['ProjectSettings'],
-          available: true,
-        },
-        {
-          title: 'Transactions',
-          icon: 'IconCoin',
-          url: `/projects/${projectId}/transactions/`,
-          routeNames: ['ProjectTransactions'],
           available: true,
         },
 
@@ -48,11 +51,6 @@ export default {
         //   link: `/projects/${this.project.id}/`,
         //   title: 'Settings',
         //   routeNames: ['ProjectCard'],
-        // },
-        // {
-        //   icon: 'IconLabel',
-        //   link: '',
-        //   title: 'Webhooks',
         // },
         // {
         //   icon: 'IconMoney',
@@ -78,6 +76,10 @@ export default {
       return 'new';
     },
   },
+
+  methods: {
+    get,
+  },
 };
 </script>
 
@@ -85,7 +87,7 @@ export default {
 <LayoutMainNavInnerBase
   :headTitle="projectPublicName"
   :headStatus="status"
-  :headImage="project.image"
+  :headImage="get(project, 'cover.images.en', '')"
   :items="items"
   :currentItemIndex="currentItemIndex"
 />

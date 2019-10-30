@@ -18,11 +18,11 @@ const config = {
   routesPrefix: getEnvVariable('ROUTES_PREFIX', ''),
   auth1RoutesNamespace: '/auth1',
 
-  sentryDsn: getEnvVariable('SENTRY_DSN', 'https://2fc1a112904e472da22284cad12c6d87@sentry.tst.protocol.one/10'),
+  sentryDsn: getEnvVariable('SENTRY_DSN', 'https://784314fe11d44fb0872d0044a28339a3@sentry.io/1796353'),
 
-  publicHost: getEnvVariable('PUBLIC_HOST', 'https://paysupermgmt.tst.protocol.one'),
+  publicHost: getEnvVariable('PUBLIC_HOST', 'http://localhost:8080'),
 
-  postMessageTargetOrigin: getEnvVariable('POST_MESSAGE_TARGET_ORIGIN', 'https://paysupermgmt.tst.protocol.one'),
+  postMessageTargetOrigin: getEnvVariable('POST_MESSAGE_TARGET_ORIGIN', 'http://localhost:3030'),
 
   auth1ClientId: getEnvVariable('AUTH1_CLIENT_ID', '5c77953f51c0950001436152'),
   auth1ClientSecret: getEnvVariable('AUTH1_CLIENT_SECRET', 'tGtL8HcRDY5X7VxEhyIye2EhiN9YyTJ5Ny0AndLNXQFgKCSgUKE0Ti4X9fHK6Qib'),
@@ -32,6 +32,16 @@ const config = {
   auth1SessionNamespace: 'auth1',
 
   corsValidOrigins: getEnvVariableArray('CORS_VALID_ORIGINS', 'http://localhost:3030'),
+
+  s3AccessKeyId: getEnvVariable('S3_ACCESS_KEY_ID'),
+  s3SecretAccessKey: getEnvVariable('S3_SECRET_ACCESS_KEY'),
+  s3BucketName: getEnvVariable('S3_BUCKET_NAME'),
+  s3Region: getEnvVariable('S3_REGION'),
+
+  paysuperSdkUrl: getEnvVariable(
+    'PAYSUPER_PAYMENT_FORM_URL',
+    'https://static.protocol.one/paysuper/form/dev/paysuper-form.js',
+  ),
 };
 
 module.exports = config;

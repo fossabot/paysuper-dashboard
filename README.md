@@ -9,33 +9,31 @@ Dashboard is the BFF server and frontend to interact with all PaySuper related f
 REST API ([Management API](https://github.com/paysuper/paysuper-management-api)) as backend. 
 
 # PayOne web interface
-Uses Nuxt.js
 
 ## Usage
 ### Development
 
-1. Add a `.env.local` file:
-```
-VUE_APP_BACKEND_DOMAIN=http://localhost:8080
-PUBLIC_HOST=http://localhost:8080
-POST_MESSAGE_TARGET_ORIGIN=http://localhost:3030
-```
-
-2. Run these in different terminal windows:
-```
-npm run serve
-```
-```
-npm run serve:be
-```
-
-3. Also there are extra env-variables required for image uploading. Ask Andrey Solodovnikov for its values
+1. To use image uploading create a `.env.local` file with following variables. Ask Andrey Solodovnikov for the values
 ```
 S3_ACCESS_KEY_ID
 S3_SECRET_ACCESS_KEY
 S3_BUCKET_NAME
 S3_REGION
 ```
+
+2. Install dependecines:
+```
+yarn
+```
+
+2. Run these in different terminal windows:
+```
+yarn serve
+```
+```
+yarn serve:be
+```
+
 
 # Authentication backend for PayOne
 

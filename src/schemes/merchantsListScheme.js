@@ -43,14 +43,21 @@ const filters = {
     defaultValue: 0,
   },
 
-  dateFrom: {
+  registrationDateFrom: {
     defaultValue: null,
-    apiQueryName: 'last_payout_date_from',
+    apiQueryName: 'registration_date_from',
   },
-
-  dateTo: {
+  registrationDateTo: {
     defaultValue: null,
-    apiQueryName: 'last_payout_date_to',
+    apiQueryName: 'registration_date_to',
+  },
+  receivedDateFrom: {
+    defaultValue: null,
+    apiQueryName: 'received_date_from',
+  },
+  receivedDateTo: {
+    defaultValue: null,
+    apiQueryName: 'received_date_to',
   },
 };
 

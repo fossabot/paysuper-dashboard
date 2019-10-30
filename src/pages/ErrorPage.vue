@@ -3,6 +3,7 @@ import { kebabCase } from 'lodash-es';
 
 const errorTexts = {
   401: 'Not authorized',
+  403: 'Forbidden',
   404: 'Page not found',
   500: 'Server error',
   520: 'Unknown error',

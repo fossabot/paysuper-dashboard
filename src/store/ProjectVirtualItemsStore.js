@@ -69,6 +69,7 @@ export default function createProjectVirtualItemsStore() {
       async fetchItems({ state, commit, rootState }) {
         const query = qs.stringify({
           ...state.apiQuery,
+          project_id: state.projectId,
         }, { arrayFormat: 'brackets' });
         const url = `${rootState.config.apiUrl}/admin/api/v1/products?${query}`;
 

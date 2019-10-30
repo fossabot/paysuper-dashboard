@@ -7,13 +7,32 @@ export default {
       type: String,
       required: true,
     },
-    value: {
+    /**
+     * @typedef {{label: string, value: string}} ItemObject
+     * @type {ItemObject[] | string[]}
+     */
+    items: {
       type: Array,
       required: true,
     },
-    defaultOption: {
+    defaultOptionValue: {
       type: String,
       required: true,
+    },
+  },
+
+  computed: {
+    itemsView() {
+      if (!this.items.length) {
+        return this.items;
+      }
+      if (typeof this.items[0] === 'string') {
+        return this.items.map(item => ({
+          label: item,
+          value: item,
+        }));
+      }
+      return this.items;
     },
   },
 };
@@ -32,12 +51,12 @@ export default {
     </button>
     <button
       class="entity-button"
-      v-for="entity in value"
-      :class="{ '_undeletable': entity === defaultOption }"
-      :key="entity"
-      @click="$emit('delete', entity)"
+      v-for="entity in itemsView"
+      :class="{ '_undeletable': entity.value === defaultOptionValue }"
+      :key="entity.value"
+      @click="$emit('delete', entity.value)"
     >
-      {{ entity }}
+      {{ entity.label }}
       <IconClose
         class="close-button"
       />

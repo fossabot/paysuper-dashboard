@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { trim } from 'lodash-es';
 import { mapState } from 'vuex';
+import assert from 'simple-assert';
 
 export default {
   name: 'PaymentFormSdk',
@@ -34,7 +35,8 @@ export default {
     },
   },
   async created() {
-    const { data } = await axios.get('https://static.protocol.one/paysuper/sdk/dev/paysuper.js');
+    assert(this.config.paysuperJsSdkUrl, 'paysuperJsSdkUrl is not defined');
+    const { data } = await axios.get(this.config.paysuperJsSdkUrl);
     const script = document.createElement('script');
     script.innerHTML = data;
     document.head.appendChild(script);
@@ -63,7 +65,7 @@ export default {
       localStorage.setItem('sdkTestRequest', JSON.stringify(request));
 
       const paySuper = new window.PaySuper({
-        formUrl: `${this.config.ownBackendUrl}/order`,
+        apiUrl: 'https://p1payapi.tst.protocol.one',
         ...request,
       });
       paySuper.renderModal();

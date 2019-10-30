@@ -17,10 +17,12 @@ const RedisStore = require('./middleware/redis-session-store');
 
 const sessionMaxAge = config.sessionMaxAge || 6 * 60 * 60; // 6 hours in seconds
 
-Sentry.init({
-  dsn: config.sentryDsn,
-  serverName: `${os.hostname()}-${process.env.NODE_ENV}`,
-});
+if (process.env.NODE_ENV === 'production') {
+  Sentry.init({
+    dsn: config.sentryDsn,
+    serverName: `${os.hostname()}-${process.env.NODE_ENV}`,
+  });
+}
 
 const app = new Koa();
 

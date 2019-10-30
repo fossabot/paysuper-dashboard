@@ -70,12 +70,12 @@ export default {
 
     dateFilter: {
       get() {
-        return [this.filters.dateFrom || null, this.filters.dateTo || null];
+        return [this.filters.receivedDateFrom || null, this.filters.receivedDateTo || null];
       },
       set(value) {
-        const [dateFrom, dateTo] = value;
-        this.filters.dateFrom = dateFrom;
-        this.filters.dateTo = dateTo;
+        const [receivedDateFrom, receivedDateTo] = value;
+        this.filters.receivedDateFrom = receivedDateFrom;
+        this.filters.receivedDateTo = receivedDateTo;
       },
     },
 
@@ -104,7 +104,7 @@ export default {
 
     updateFiltersFromQuery() {
       this.filters = this.getFilterValues([
-        'quickFilter', 'offset', 'limit', 'dateFrom', 'dateTo', 'status',
+        'quickFilter', 'offset', 'limit', 'receivedDateFrom', 'receivedDateTo', 'status',
       ]);
     },
 
@@ -253,11 +253,11 @@ export default {
         </UiTableCell>
         <UiTableCell align="left">
           <span
-            class="cell-text _empty"
+            class="cell-text"
+            :class="{'_empty': !merchant.received_date}"
           >
-            —
+            {{ $formatDate(merchant.received_date, 'dd.MM.yy') || '—' }}
           </span>
-          <span class="cell-text"></span>
         </UiTableCell>
         <UiTableCell align="left">
           <span

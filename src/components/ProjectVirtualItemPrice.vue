@@ -1,7 +1,10 @@
 <script>
-import { find, cloneDeep, mapValues } from 'lodash-es';
+import {
+  find, cloneDeep, mapValues, isEqual,
+} from 'lodash-es';
 import { required } from 'vuelidate/lib/validators';
 import { mapActions } from 'vuex';
+import { getCurrencyValueFromItem } from '@/helpers/currencyDataConversion';
 
 export default {
   name: 'ProjectVirtualItemPrice',
@@ -13,6 +16,10 @@ export default {
     },
     prices: {
       type: Array,
+      required: true,
+    },
+    defaultCurrency: {
+      type: Object,
       required: true,
     },
   },
@@ -79,24 +86,21 @@ export default {
     ...mapActions('ProjectVirtualItemPage', ['getPrices']),
 
     getCurrencyName(currency) {
+      const name = getCurrencyValueFromItem(currency);
       if (this.isDefault(currency)) {
-        return 'USD, Default currency';
+        return `${name}, Default currency`;
       }
-
-      if (currency.currency === currency.region) {
-        return currency.currency;
-      }
-
-      return `${currency.currency}, ${currency.region}`;
+      return name;
     },
 
-    isDefault(currency) {
-      return currency.currency === 'USD' && currency.region === 'USD';
+    isDefault({ currency, region }) {
+      return isEqual(this.defaultCurrency, { currency, region });
     },
 
     async fillPrice(amount) {
       this.setIsLoading(true);
-      const prices = await this.getPrices(amount).catch(this.$showErrorMessage);
+      const { currency } = this.defaultCurrency;
+      const prices = await this.getPrices({ amount, currency }).catch(this.$showErrorMessage);
       prices.forEach((price) => {
         const item = find(this.priceData, { region: price.region, currency: price.currency });
         if (item) {
@@ -196,9 +200,9 @@ export default {
     width: 138px;
     margin-right: 12px;
 
-  &:first-child {
-     width: 100%;
-   }
+    &:first-child {
+      width: 100%;
+    }
   }
 }
 

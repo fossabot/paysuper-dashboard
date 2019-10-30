@@ -1,10 +1,11 @@
 <script>
-import { mapState, mapActions, mapGetters } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 import { required } from 'vuelidate/lib/validators';
 import { find, cloneDeep, debounce } from 'lodash-es';
 import { OpenFileDialog } from '@/helpers/uploader';
 import ProjectKeyProductStore from '@/store/ProjectKeyProductStore';
 import ProjectKeyProductPriceBlock from '@/components/ProjectKeyProductPriceBlock.vue';
+import updateLangFields from '@/helpers/updateLangFields';
 
 export default {
   name: 'ProjectKeyProductPage',
@@ -23,10 +24,12 @@ export default {
 
   data() {
     return {
+      langFields: ['cover.images', 'name'],
       keyProductLocal: null,
       isSkuUnique: true,
       isDisablePlatformConfirmOpened: false,
       platformIdForDisable: '',
+      recommendedPricesTable: [],
       pricingList: [
         {
           id: 1,
@@ -49,8 +52,8 @@ export default {
   },
 
   computed: {
-    ...mapState('Project', ['project']),
-    ...mapGetters('Project', ['currenciesDetailed']),
+    ...mapState('Project', ['project', 'defaultCurrency']),
+    ...mapGetters('Project', ['defaultCurrencyValue']),
     ...mapState('ProjectKeyProduct', ['keyProductId', 'keyProduct', 'platforms', 'keyCounts']),
 
     platformNameForDelete() {
@@ -87,22 +90,31 @@ export default {
     next();
   },
 
-  created() {
+  async created() {
     this.updateKeyProductLocal();
+
+    const { currency } = this.defaultCurrency;
+    this.recommendedPricesTable = await this.getRecommendedPricesTable(currency)
+      .catch(this.$showErrorMessage);
   },
 
   methods: {
     ...mapActions(['setIsLoading', 'uploadImage']),
     ...mapActions('Project', ['checkIsSkuUnique']),
     ...mapActions('ProjectKeyProduct', [
-      'initState', 'uploadKey', 'updateKeyProduct', 'createKeyProduct', 'getRecommendedPrices',
+      'initState', 'uploadKey', 'updateKeyProduct', 'createKeyProduct',
+      'getRecommendedPrices', 'getRecommendedPricesTable',
     ]),
 
     updateKeyProductLocal() {
-      this.keyProductLocal = cloneDeep(this.keyProduct);
+      this.keyProductLocal = {
+        ...cloneDeep(this.keyProduct),
+        default_currency: this.defaultCurrency.currency,
+      };
+      updateLangFields(this.keyProductLocal, this.langFields, this.project.localizations);
 
       this.keyProductLocal.platforms.forEach((platform) => {
-        platform.prices = this.currenciesDetailed.map(({ currency, region }) => {
+        platform.prices = this.project.currencies.map(({ currency, region }) => {
           const match = find(platform.prices, { currency, region });
           return {
             currency,
@@ -138,7 +150,7 @@ export default {
         const platform = find(this.platforms, { id });
         this.keyProductLocal.platforms.push({
           ...platform,
-          prices: this.currenciesDetailed.map(item => ({
+          prices: this.project.currencies.map(item => ({
             ...item,
             amount: '',
           })),
@@ -183,8 +195,8 @@ export default {
             projectId: this.project.id,
           });
           this.$showSuccessMessage('The key product is successfuly created');
-          this.$navigate(`/projects/${this.project.id}/game-keys/${this.keyProductId}`);
         }
+        this.$navigate(`/projects/${this.project.id}/game-keys/`);
       } catch (error) {
         this.$showErrorMessage(error);
       }
@@ -193,7 +205,8 @@ export default {
 
     async handleRecommendedPricesSelect({ amount, platformId, closeSuggest }, type) {
       this.setIsLoading(true);
-      const prices = await this.getRecommendedPrices({ amount, type })
+      const { currency } = this.defaultCurrency;
+      const prices = await this.getRecommendedPrices({ amount, currency, type })
         .catch(this.$showErrorMessage);
 
       this.setIsLoading(false);
@@ -205,7 +218,7 @@ export default {
 
       const platformData = find(this.keyProductLocal.platforms, { id: platformId });
 
-      const defaultPrice = find(platformData.prices, { region: 'USD', currency: 'USD' });
+      const defaultPrice = find(platformData.prices, this.defaultCurrency);
       defaultPrice.amount = amount;
 
       prices.forEach((price) => {
@@ -243,7 +256,6 @@ export default {
   </UiPageHeaderFrame>
 
   <UiPanel>
-
     <section class="section">
       <UiSwitchBox
         class="localization-switch"
@@ -253,6 +265,7 @@ export default {
       </UiSwitchBox>
 
       <UiLangsImageUpload
+        :langs="project.localizations"
         :uploadImage="uploadImage"
         :isLocalizationEnabled="!keyProductLocal.cover.use_one_for_all"
         v-model="keyProductLocal.cover.images"
@@ -260,6 +273,7 @@ export default {
 
       <UiLangTextField
         label="Game title"
+        :langs="project.localizations"
         v-model="keyProductLocal.name"
         v-bind="$getValidatedFieldProps('keyProductLocal.name.en')"
       />
@@ -303,7 +317,9 @@ export default {
       <ProjectKeyProductPriceBlock
         ref="pricesBlock"
         :platforms="keyProductLocal.platforms"
-        :currencies="currenciesDetailed"
+        :currencies="project.currencies"
+        :defaultCurrency="defaultCurrency"
+        :recommendedPricesTable="recommendedPricesTable"
         @fillSteamPrices="handleRecommendedPricesSelect($event, 'steam')"
         @fillConvertedPrices="handleRecommendedPricesSelect($event, 'conversion')"
       />

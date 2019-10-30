@@ -94,8 +94,8 @@ export default {
       class="content"
     >
       <div
-        v-for="(item, index) in items"
-        :key="index"
+        v-for="item in items"
+        :key="item.id"
         :class="{ _readed: item.is_read }"
         class="item"
         @click="openItem(item)"

@@ -153,7 +153,7 @@ export default {
     pointer-events: none;
 
     & > .title::after {
-      content: '';
+      content: "";
       position: absolute;
       top: 50%;
       left: -26px;
@@ -168,13 +168,15 @@ export default {
   align-content: center;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   margin-right: 9px;
 
   & > svg {
-    fill: #78909C;
+    fill: #000000;
     transition: fill 0.2s ease-out;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   .item:hover & > svg {

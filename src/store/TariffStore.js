@@ -1,77 +1,48 @@
 import axios from 'axios';
 import {
-  camelCase,
+  get,
+  groupBy,
   map,
-  toNumber,
+  includes,
+  union,
   upperFirst,
 } from 'lodash-es';
 import qs from 'qs';
 import getCountriesByRegion from '@/helpers/getCountriesByRegion';
+import getIconByPaymentMethod from '@/helpers/getIconByPaymentMethod';
 
-function mapRegionNames(region) {
-  const regions = {
-    'North America': 'north_america',
-    EA: 'ea',
-    'United Kingdom': 'uk',
-    Russia: 'russia',
-    Worldwide: 'worldwide',
-  };
-
-  return region && regions[region];
-}
-
-function prepareRegionData(region, data) {
-  const regions = {
-    north_america: { defaultCurrency: 'USD', label: 'North America', abbreviation: 'NA' },
-    eu: { defaultCurrency: 'EUR', label: 'European Union', abbreviation: 'EU' },
-    uk: { defaultCurrency: 'GBP', label: 'United Kingdom', abbreviation: 'UK' },
-    russia: { defaultCurrency: 'RUB', label: 'Russia', abbreviation: 'RU' },
-    worldwide: { defaultCurrency: 'USD', label: 'Worldwide', abbreviation: 'WW' },
-  };
-
-  const payment = data.payment || [];
-  const refund = data.money_back || [];
-  const chargeback = data.chargeback || [];
-  const payout = data.payout || [];
-
-  return {
-    ...regions[region],
-    countries: getCountriesByRegion(region),
-    channelCosts: payment.map(item => ({
-      method: item.method,
-      icon: `Icon${upperFirst(camelCase(item.method))}`,
+function preparePayerRegion(data) {
+  let amounts = [];
+  const channelCosts = groupBy(
+    map(data, item => ({
+      method: upperFirst(item.method_name),
+      icon: getIconByPaymentMethod(item.method_name),
       methodFee: item.method_percent_fee,
       fixedFee: item.method_fixed_fee,
       overallFee: item.ps_percent_fee,
       psGeneralFixedFee: item.ps_fixed_fee,
+      min: item.min_amount,
+      max: item.max_amount,
     })),
-    refundCosts: refund.map(item => ({
-      method: item.method,
-      icon: `Icon${upperFirst(camelCase(item.method))}`,
-      refundFee: item.percent_fee,
-      refundFixedFee: item.fixed_fee,
-      payoutParty: item.is_paid_by_merchant ? 'Merchant' : 'Pay Super',
-    })),
-    chargeback: {
-      fee: chargeback.fixed_fee,
-      payoutParty: chargeback.is_paid_by_merchant ? 'Merchant' : 'Pay Super',
+    (item) => {
+      const amount = `${item.min}-${item.max}`;
+      amounts = union(amounts, [amount]);
+      return amount;
     },
-    payout: {
-      fee: payout.fixed_fee,
-      payoutParty: payout.is_paid_by_merchant ? 'Merchant' : 'Pay Super',
-    },
-  };
+  );
+
+  return { amounts, channelCosts };
 }
 
 export default function createTariffStore() {
   return {
     namespaced: true,
     state: {
-      amount: '0.75-5',
+      amount: '0-4.99',
+      amounts: [],
       currency: 'USD',
-      channelCostsRegion: 'north_america',
-      refundCostsRegion: 'north_america',
-      region: 'north_america',
+      payerRegion: 'europe',
+      region: 'europe',
       regions: [],
     },
     getters: {},
@@ -79,14 +50,11 @@ export default function createTariffStore() {
       amount(state, data) {
         state.amount = data;
       },
-      currency(state, data) {
-        state.currency = data;
+      amounts(state, data) {
+        state.amounts = data;
       },
-      channelCostsRegion(state, data) {
-        state.channelCostsRegion = data;
-      },
-      refundCostsRegion(state, data) {
-        state.refundCostsRegion = data;
+      payerRegion(state, data) {
+        state.payerRegion = data;
       },
       region(state, data) {
         state.region = data;
@@ -96,57 +64,54 @@ export default function createTariffStore() {
       },
     },
     actions: {
-      async initState({
-        commit,
-        dispatch,
-        state,
-        rootState,
-      }) {
-        const { tariff } = rootState.User.Merchant.merchant;
-        const region = tariff && mapRegionNames(tariff.region);
-
-        if (region) {
-          commit('region', region);
-          commit('regions', { [region]: prepareRegionData(region, tariff) });
-        } else {
-          await dispatch('fetchTariffs', state.region);
-        }
+      async initState({ dispatch }) {
+        await dispatch('fetchTariffs');
       },
-      async fetchTariffs({ commit, state, rootState }, region) {
-        const actualRegion = region || state.region;
-        const amount = map(state.amount.split('-'), toNumber);
-
-        const queryString = qs.stringify({
-          region: actualRegion,
-          payout_currency: state.currency,
-          amount_from: amount[0],
-          amount_to: amount[1],
-        });
+      async fetchTariffs({ commit, state }) {
+        const { payerRegion, region } = state;
+        const queryString = qs.stringify({ payer_region: payerRegion, region });
 
         const response = await axios.get(
-          `${rootState.config.apiUrl}/admin/api/v1/merchants/tariffs?${queryString}`,
+          `{apiUrl}/admin/api/v1/merchants/tariffs?${queryString}`,
         );
 
         if (response.data) {
+          const { payment, chargeback, payout } = response.data;
+          const { amounts, channelCosts } = preparePayerRegion(payment);
+
+          if (amounts && amounts.length) {
+            commit('amounts', amounts);
+
+            if (!includes(amounts, state.amount)) {
+              commit('amount', amounts[0]);
+            }
+          }
           commit('regions', {
             ...state.regions,
-            [actualRegion]: prepareRegionData(actualRegion, response.data),
+            [region]: {
+              countries: getCountriesByRegion(region),
+              payerRegions: {
+                ...get(state.regions, `${region}.payerRegions`, {}),
+                [payerRegion]: channelCosts,
+              },
+              chargeback: {
+                fee: chargeback.method_fixed_fee,
+                currency: chargeback.method_fixed_fee_currency,
+                payoutParty: chargeback.is_paid_by_merchant ? 'Merchant' : 'PaySuper',
+              },
+              payout: {
+                fee: payout.method_fixed_fee,
+                currency: payout.method_fixed_fee_currency,
+                payoutParty: payout.is_paid_by_merchant ? 'Merchant' : 'PaySuper',
+              },
+            },
           });
         }
       },
-      async submitTariffs({ dispatch, state, rootState }) {
-        const { Merchant } = rootState.User;
-        const merchantId = Merchant.merchant.id;
-        const amount = map(state.amount.split('-'), toNumber);
-
+      async submitTariffs({ dispatch, state }, merchantId) {
         const response = await axios.post(
-          `${rootState.config.apiUrl}/admin/api/v1/merchants/${merchantId}/tariffs`,
-          {
-            region: state.region,
-            payout_currency: state.currency,
-            amount_from: amount[0],
-            amount_to: amount[1],
-          },
+          `{apiUrl}/admin/api/v1/merchants/${merchantId}/tariffs`,
+          { home_region: state.region },
         );
 
         if (response.status === 200) {
@@ -157,25 +122,26 @@ export default function createTariffStore() {
 
         return false;
       },
-      updateRegion({ commit, dispatch }, region) {
+      updatePayerRegion({ commit, dispatch, state }, region) {
+        commit('payerRegion', region);
+
+        if (get(state.regions, `${state.region}.payerRegions.${region}`, null)) {
+          return;
+        }
+
+        dispatch('fetchTariffs');
+      },
+      updateRegion({ commit, dispatch, state }, region) {
         commit('region', region);
-        dispatch('fetchTariffs', region);
-      },
-      updateCurrency({ commit, dispatch }, currency) {
-        commit('currency', currency);
+
+        if (get(state.regions, `${region}.payerRegions.${state.payerRegion}`, null)) {
+          return;
+        }
+
         dispatch('fetchTariffs');
       },
-      updateChannelCostsRegion({ commit, dispatch }, region) {
-        commit('channelCostsRegion', region);
-        dispatch('fetchTariffs', region);
-      },
-      updateRefundCostsRegion({ commit, dispatch }, region) {
-        commit('refundCostsRegion', region);
-        dispatch('fetchTariffs', region);
-      },
-      updateAmount({ commit, dispatch }, amount) {
+      updateAmount({ commit }, amount) {
         commit('amount', amount);
-        dispatch('fetchTariffs');
       },
     },
   };

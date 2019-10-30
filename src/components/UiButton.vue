@@ -155,7 +155,8 @@ $primary-button-size: 14px;
   padding: 8px 24px;
   position: relative;
   text-align: center;
-  transition: color 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out;
+  transition: color 0.2s ease-out, background-color 0.2s ease-out,
+    box-shadow 0.2s ease-out;
 
   &:not(._disabled):not(._transparent):before {
     bottom: 1px;
@@ -247,7 +248,7 @@ $primary-button-size: 14px;
       normal,
       $light-gray-transparent-font-color,
       $light-gray-transparent-border-color,
-      $light-gray-button-color,
+      $light-gray-transparent-hover-font-color,
       $light-gray-transparent-hover-box-color
     );
   }

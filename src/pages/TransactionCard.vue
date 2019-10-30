@@ -32,7 +32,7 @@ export default {
     try {
       await registerStoreModule('TransactionPage', TransactionPageStore, {
         transactionId: route.params.transactionId,
-      }).catch(this.$showErrorMessage);
+      });
     } catch (error) {
       store.dispatch('setPageError', error);
     }

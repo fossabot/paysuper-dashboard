@@ -73,11 +73,13 @@ export default {
 
 <style lang="scss" scoped>
 .content {
-  padding: 24px 0;
+  padding: 0;
 
   .descr {
     text-align: center;
     width: 100%;
+    font-size: 16px;
+    margin-bottom: 16px;
   }
 }
 

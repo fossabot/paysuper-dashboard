@@ -34,18 +34,31 @@ const routes = [
   {
     path: '/',
     component: () => import('@/pages/index.vue'),
+    name: 'Index',
+  },
+  {
+    path: '/reports/',
+    component: () => import('@/pages/RoyaltyReportsPage.vue'),
+    meta: { layout: 'Layout', isAuthRequired: true },
+    name: 'RoyaltyReportsPage',
+  },
+  {
+    path: '/reports/:reportId',
+    component: () => import('@/pages/RoyaltyReportCard.vue'),
+    meta: { layout: 'Layout', isAuthRequired: true },
+    name: 'RoyaltyReportCard',
   },
   {
     path: '/transactions/',
-    component: () => import('@/pages/TransactionsList.vue'),
+    component: () => import('@/pages/TransactionsPage.vue'),
     meta: { layout: 'Layout', isAuthRequired: true },
-    name: 'transactions',
+    name: 'TransactionsPage',
   },
   {
     path: '/transactions/:transactionId',
     component: () => import('@/pages/TransactionCard.vue'),
     meta: { layout: 'Layout', isAuthRequired: true },
-    name: 'transactionsCard',
+    name: 'TransactionsCard',
   },
   {
     path: '/projects/',
@@ -59,6 +72,15 @@ const routes = [
     redirect: { name: 'ProjectSettings' },
     name: 'Project',
     children: [
+      {
+        path: 'sales-options/',
+        component: () => import('@/pages/ProjectSalesOptionsPage.vue'),
+        meta: {
+          ...projectPagesMeta,
+          topControls: () => import('@/components/LayoutTopControlsProjectSalesOptions.vue'),
+        },
+        name: 'ProjectSalesOptions',
+      },
       {
         path: 'virtual-currency/',
         component: () => import('@/pages/ProjectVirtualCurrencyPage.vue'),
@@ -103,6 +125,15 @@ const routes = [
         component: () => import('@/pages/ProjectSettingsPage.vue'),
         meta: projectPagesMeta,
         name: 'ProjectSettings',
+      },
+      {
+        path: 'webhooks/',
+        component: () => import('@/pages/ProjectWebhooksPage.vue'),
+        meta: {
+          ...projectPagesMeta,
+          // topControls: () => import('@/components/LayoutTopControlsProjectWebhooks.vue'),
+        },
+        name: 'ProjectWebhooks',
       },
     ],
   },
@@ -198,10 +229,16 @@ const routes = [
     name: 'revenue',
   },
   {
-    path: '/payout/',
-    component: () => import('@/pages/payout.vue'),
-    meta: { layout: 'Page', isAuthRequired: true },
-    name: 'payout',
+    path: '/payouts/',
+    component: () => import('@/pages/payouts.vue'),
+    meta: { layout: 'Layout', isAuthRequired: true },
+    name: 'payouts',
+  },
+  {
+    path: '/payouts/:id',
+    component: () => import('@/pages/payoutCard.vue'),
+    meta: { layout: 'Layout', isAuthRequired: true },
+    name: 'payoutCard',
   },
   {
     path: '/demo/',
@@ -234,6 +271,11 @@ const routes = [
     name: 'Login',
   },
   {
+    path: '/logout/',
+    component: () => import('@/pages/LogoutPage.vue'),
+    name: 'Logout',
+  },
+  {
     path: '/form-demo/',
     component: () => import('@/pages/PaymentFormSdk.vue'),
     meta: { layout: 'PageShallow', initStore: ['config'] },
@@ -261,7 +303,8 @@ const routes = [
   },
   {
     path: '/confirm_email/',
-    component: () => import('@/pages/ConfirmEmail.vue'),
+    component: () => import('@/pages/ConfirmEmailPage.vue'),
+    meta: { initStore: ['config'] },
   },
   {
     path: '/receipt/:receiptType/:receiptId/:orderId',

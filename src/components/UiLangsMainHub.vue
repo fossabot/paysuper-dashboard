@@ -23,37 +23,37 @@ export default {
 
   data() {
     return {
-      defaultOptionCode: 'en',
+      defaultOptionValue: 'en',
       isToReopenAddModal: false,
       isEntityManagementModalOpened: false,
       localizationsModalLangs: [],
       isDeleteModalOpened: false,
       langToDelete: '',
       localizationOptions: [
-        { label: 'Английский', code: 'en' },
-        { label: 'Испанский', code: 'es' },
-        { label: 'Арабский', code: 'ar' },
-        { label: 'Русский', code: 'ru' },
-        { label: 'Традиционный китайский', code: 'zh-Hant' },
-        { label: 'Упрощенный китайский', code: 'zh-Hans' },
-        { label: 'Бразильский португальский', code: 'pt-BR' },
-        { label: 'Португальский', code: 'pt-PT' },
-        { label: 'Французский', code: 'fr' },
-        { label: 'Немецкий', code: 'de' },
-        { label: 'Итальянский', code: 'it' },
-        { label: 'Польский', code: 'pl' },
-        { label: 'Турецкий', code: 'tr' },
-        { label: 'Греческий', code: 'el' },
-        { label: 'Корейский', code: 'ko' },
-        { label: 'Вьетнамский', code: 'vi' },
-        { label: 'Японский', code: 'ja' },
-        { label: 'Иврит', code: 'he' },
-        { label: 'Тайский', code: 'th' },
-        { label: 'Чешский', code: 'cs' },
-        { label: 'Болгарский', code: 'bg' },
-        { label: 'Финский', code: 'fi' },
-        { label: 'Шведский', code: 'sv' },
-        { label: 'Датский', code: 'da' },
+        { label: 'Английский', value: 'en' },
+        { label: 'Испанский', value: 'es' },
+        { label: 'Арабский', value: 'ar' },
+        { label: 'Русский', value: 'ru' },
+        { label: 'Традиционный китайский', value: 'zh-Hant' },
+        { label: 'Упрощенный китайский', value: 'zh-Hans' },
+        { label: 'Бразильский португальский', value: 'pt-BR' },
+        { label: 'Португальский', value: 'pt-PT' },
+        { label: 'Французский', value: 'fr' },
+        { label: 'Немецкий', value: 'de' },
+        { label: 'Итальянский', value: 'it' },
+        { label: 'Польский', value: 'pl' },
+        { label: 'Турецкий', value: 'tr' },
+        { label: 'Греческий', value: 'el' },
+        { label: 'Корейский', value: 'ko' },
+        { label: 'Вьетнамский', value: 'vi' },
+        { label: 'Японский', value: 'ja' },
+        { label: 'Иврит', value: 'he' },
+        { label: 'Тайский', value: 'th' },
+        { label: 'Чешский', value: 'cs' },
+        { label: 'Болгарский', value: 'bg' },
+        { label: 'Финский', value: 'fi' },
+        { label: 'Шведский', value: 'sv' },
+        { label: 'Датский', value: 'da' },
       ],
     };
   },
@@ -62,15 +62,15 @@ export default {
     localizationOptionsPrepared() {
       return this.localizationOptions.map((item) => {
         let iconComponent = 'IconLangNoIcon';
-        const [name] = item.code.split('-');
+        const [name] = item.value.split('-');
         const componentName = `IconLang${upperFirst(name)}`;
 
         if (this.$options.components[componentName]) {
           iconComponent = componentName;
         }
         return {
-          label: `${item.label} (${item.code.toUpperCase()})`,
-          code: item.code,
+          label: `${item.label} (${item.value.toUpperCase()})`,
+          value: item.value,
           iconComponent,
         };
       });
@@ -84,7 +84,7 @@ export default {
     },
 
     requestDeleteLang(lang) {
-      if (lang === this.defaultOptionCode) {
+      if (lang === this.defaultOptionValue) {
         return;
       }
       this.isDeleteModalOpened = true;
@@ -124,8 +124,8 @@ export default {
 <div>
   <UiEntityMainHub
     label="Localization"
-    :value="langs"
-    :defaultOption="defaultOptionCode"
+    :items="langs"
+    :defaultOptionValue="defaultOptionValue"
     @add="openEntityManagementModal"
     @delete="requestDeleteLang"
   />
@@ -145,8 +145,8 @@ export default {
     v-model="localizationsModalLangs"
     title="Localizations"
     :value="langs"
-    :options="localizationOptionsPrepared"
-    :defaultOptionCode="defaultOptionCode"
+    :items="localizationOptionsPrepared"
+    :defaultOptionValue="defaultOptionValue"
     @close="isEntityManagementModalOpened = false"
     @delete="requestDeleteLangFromModal"
     @save="handleModalSave"

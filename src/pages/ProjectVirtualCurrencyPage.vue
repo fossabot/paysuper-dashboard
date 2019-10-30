@@ -1,27 +1,20 @@
 <script>
+import { mapState, mapGetters, mapActions } from 'vuex';
+import { cloneDeep } from 'lodash-es';
 import { required } from 'vuelidate/lib/validators';
 import PictureLetterGLandscape from '@/components/PictureLetterGLandscape.vue';
+import TestingTag from '@/components/TestingTag.vue';
 
 export default {
   name: 'ProjectVirtualCurrencyPage',
   components: {
     PictureLetterGLandscape,
-  },
-  props: {
-    project: {
-      type: Object,
-      required: true,
-    },
-    uploadImage: {
-      type: Function,
-      required: true,
-    },
+    TestingTag,
   },
 
   data() {
     return {
-      langs: ['en', 'ru'],
-      currencies: ['USD', 'EUR'],
+      projectLocal: null,
       image: '',
       virtualCurrencyName: {
         en: '',
@@ -38,6 +31,11 @@ export default {
     };
   },
 
+  computed: {
+    ...mapState('Project', ['project']),
+    ...mapGetters('Project', ['currenciesTags', 'defaultCurrencyValue']),
+  },
+
   validations: {
     virtualCurrencyName: {
       en: {
@@ -46,13 +44,29 @@ export default {
     },
   },
 
+  watch: {
+    project() {
+      this.updateProjectLocal();
+    },
+  },
+
+  created() {
+    this.updateProjectLocal();
+  },
+
   methods: {
+    ...mapActions(['uploadImage']),
+
+    updateProjectLocal() {
+      this.projectLocal = cloneDeep(this.project);
+    },
+
     handleSave() {
-      this.$v.touch();
+      this.$v.$touch();
       if (this.$v.$invalid) {
         return;
       }
-      this.$emit('save');
+      this.$emit('save', this.projectLocal);
     },
   },
 };
@@ -60,17 +74,10 @@ export default {
 
 <template>
 <div>
-  <UiPageHeaderFrame tag="testing">
+  <UiPageHeaderFrame>
     <template slot="title">
       Virtual currency
-      <span class="tag">
-        Testing
-        <IconParagraphPointer
-          fill="#F3AA18"
-          width="5"
-          height="9"
-        />
-      </span>
+      <TestingTag class="tag" />
     </template>
     <span slot="description">
       Virtual Currency is an option to sell your in-game currency — gold, coins, etc.
@@ -91,13 +98,13 @@ export default {
       />
       <UiLangTextField
         :value="virtualCurrencyName"
-        :langs="langs"
+        :langs="projectLocal.localizations"
         label="Virtual currency name"
         v-bind="$getValidatedFieldProps('virtualCurrencyName.en')"
       />
       <UiLangTextField
         :value="successfulMessage"
-        :langs="langs"
+        :langs="projectLocal.localizations"
         label="Custom message on successful payment"
       />
     </section>
@@ -131,11 +138,11 @@ export default {
       </div>
       <UiLangTextField
         :value="singleUnitPrice"
-        :langs="currencies"
+        :langs="currenciesTags"
         :isNumeric="true"
         :decimalLength="2"
         label="Virtual currency single unit price"
-        v-bind="$getValidatedFieldProps('singleUnitPrice.USD')"
+        v-bind="$getValidatedFieldProps(`singleUnitPrice.${defaultCurrencyValue}`)"
       />
     </section>
 
@@ -213,21 +220,7 @@ export default {
 }
 
 .tag {
-  position: relative;
   top: -8px;
   margin-left: 8px;
-  height: 24px;
-  line-height: 20px;
-  border: 1px solid #f3aa18;
-  box-sizing: border-box;
-  border-radius: 12px;
-  padding: 0 12px;
-  font-size: 12px;
-  color: #f3aa18;
-  letter-spacing: 0.4px;
-
-  & > svg {
-    margin-left: 4px;
-  }
 }
 </style>

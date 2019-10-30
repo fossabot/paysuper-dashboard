@@ -79,7 +79,7 @@ export default {
         {
           ...(cloneDeep(channelCostsItem)),
           method: 'Ali Pay',
-          icon: 'IconAliPay',
+          icon: 'IconAlipay',
           isExpanded: false,
           items: [
             cloneDeep(channelCostsItem),

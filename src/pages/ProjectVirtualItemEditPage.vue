@@ -2,23 +2,21 @@
 import { mapActions, mapState } from 'vuex';
 import { required } from 'vuelidate/lib/validators';
 import {
-  debounce, get, cloneDeep,
+  debounce, get, cloneDeep, find,
 } from 'lodash-es';
 import ProjectVirtualItemPageStore from '@/store/ProjectVirtualItemPageStore';
 import ProjectVirtualItemPrice from '@/components/ProjectVirtualItemPrice.vue';
+import updateLangFields from '@/helpers/updateLangFields';
 
 const DEFAULTS = {
   name: {
     en: '',
-    ru: '',
   },
   description: {
     en: '',
-    ru: '',
   },
   long_description: {
     en: '',
-    ru: '',
   },
   enabled: true,
 };
@@ -30,47 +28,21 @@ export default {
     ProjectVirtualItemPrice,
   },
 
-  props: {
-    project: {
-      type: Object,
-      required: true,
-    },
-    uploadImage: {
-      type: Function,
-      required: true,
-    },
-  },
-
   data() {
     return {
+      langFields: ['name', 'description', 'long_description'],
       isSkuUnique: true,
-      langs: ['en', 'ru'],
       item: null,
       image: null,
     };
   },
 
   computed: {
+    ...mapState('Project', ['project', 'defaultCurrency']),
     ...mapState('ProjectVirtualItemPage', ['virtualItem']),
-    ...mapState('Project', ['currencies']),
 
     isNewItem() {
       return this.$route.params.itemId === 'new';
-    },
-
-    mapCurrencies() {
-      return this.currencies.map((name) => {
-        let currency = name;
-        let region = name;
-        if (name.indexOf('-') > -1) {
-          [currency, region] = name.split('-');
-        }
-        return {
-          amount: null,
-          currency,
-          region,
-        };
-      });
     },
 
     projectId() {
@@ -122,14 +94,27 @@ export default {
       this.item = this.virtualItem;
     } else {
       this.item = cloneDeep(DEFAULTS);
-      this.item.prices = this.mapCurrencies;
       this.item.pricing = 'manual';
     }
+
+    this.item.prices = this.project.currencies.map(({ currency, region }) => {
+      const match = find(this.item.prices, { currency, region });
+      if (match) {
+        return match;
+      }
+      return {
+        amount: null,
+        currency,
+        region,
+      };
+    });
+
+    updateLangFields(this.item, this.langFields, this.project.localizations);
     this.image = get(this.item, 'images.0', '');
   },
 
   methods: {
-    ...mapActions(['setIsLoading']),
+    ...mapActions(['uploadImage', 'setIsLoading']),
     ...mapActions('ProjectVirtualItemPage', ['editItem', 'createItem']),
     ...mapActions('Project', ['checkIsSkuUnique']),
 
@@ -149,7 +134,8 @@ export default {
         images: [this.image],
         object: 'product',
         type: 'simple_product',
-        default_currency: 'USD',
+        default_currency: this.defaultCurrency.currency,
+        billing_type: 'real',
       };
       try {
         if (this.isNewItem) {
@@ -203,19 +189,20 @@ export default {
           v-model="image"
         />
         <UiLangTextField
+          :langs="project.localizations"
           v-model="item.name"
           label="Item name"
           v-bind="$getValidatedFieldProps('item.name.en')"
         />
         <UiLangTextField
+          :langs="project.localizations"
           v-model="item.description"
-          :required="true"
           label="Short description"
           v-bind="$getValidatedFieldProps('item.description.en')"
         />
         <UiLangTextField
+          :langs="project.localizations"
           v-model="item.long_description"
-          :required="true"
           label="Full description"
           v-bind="$getValidatedFieldProps('item.long_description.en')"
         />
@@ -248,6 +235,7 @@ export default {
           ref="pricesBlock"
           :method="item.pricing"
           :prices="item.prices"
+          :defaultCurrency="defaultCurrency"
           @updatePrice="handleUpdatePrice"/>
       </section>
 

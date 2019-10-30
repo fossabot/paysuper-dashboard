@@ -86,14 +86,22 @@ export default function createUserStore(resources) {
        * @returns {Promise.<T>|Promise<any>|Promise}
        */
       async refreshToken({ dispatch, rootState }) {
-        const response = await axios.get(`${rootState.config.ownBackendUrl}/auth1/refresh`, {
-          // this method requires only cookies for authrization
-          withCredentials: true,
-        });
-        await dispatch('setAccessToken', response.data.access_token);
+        try {
+          const response = await axios.get(`${rootState.config.ownBackendUrl}/auth1/refresh`, {
+            // this method requires only cookies for authrization
+            withCredentials: true,
+          });
+          await dispatch('setAccessToken', response.data.access_token);
+        } catch (error) {
+          // logout is required in case when we can't get new token (refresh failed),
+          // but auth form thinks we're still logged (because of cookies)
+          // In that case auth form won't show itself until we clear the cookies
+          await dispatch('logout');
+          throw error;
+        }
       },
 
-      async logout({ commit, rootState }) {
+      async logout({ commit, dispatch, rootState }) {
         try {
           await axios.get(`${rootState.config.ownBackendUrl}/auth1/logout`, {
             withCredentials: true,
@@ -104,6 +112,7 @@ export default function createUserStore(resources) {
         commit('isAuthorised', false);
         commit('isEmailConfirmed', false);
         commit('accessToken', '');
+        dispatch('Profile/setCurrentStepCode');
       },
     },
 

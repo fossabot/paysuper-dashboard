@@ -73,7 +73,7 @@ export default {
         {
           ...(cloneDeep(refundCostsItem)),
           method: 'Ali Pay',
-          icon: 'IconAliPay',
+          icon: 'IconAlipay',
           isExpanded: false,
           items: [
             cloneDeep(refundCostsItem),

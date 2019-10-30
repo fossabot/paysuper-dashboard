@@ -105,7 +105,7 @@ export default function createUserStore() {
       },
 
       setCurrentStepCode({ commit }, value) {
-        commit('currentStepCode', value);
+        commit('currentStepCode', value || 'personal');
       },
 
       waitForEmailConfirm({ state, rootState }) {

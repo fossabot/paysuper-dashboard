@@ -1,4 +1,5 @@
 <script>
+import { get } from 'lodash-es';
 import { format } from 'date-fns';
 import { directive as clickaway } from 'vue-clickaway';
 
@@ -33,6 +34,9 @@ export default {
     isInactive() {
       return this.project.status === 4;
     },
+    image() {
+      return get(this.project, 'cover.images.en', '');
+    },
   },
 
   methods: {
@@ -44,7 +48,7 @@ export default {
 </script>
 
 <template>
-<div class="project-panel-item" :class="{'_no-image': !project.image}">
+<div class="project-panel-item" :class="{ '_no-image': !image }">
   <span
     class="menu-opener-holder"
   >
@@ -99,9 +103,9 @@ export default {
       </span>
       <div
         class="picture"
-        :style="{backgroundImage: `url(${project.image})`}"
+        :style="{backgroundImage: `url(${image})`}"
       >
-        <IconNoImage v-if="!project.image" />
+        <IconNoImage v-if="!image" />
       </div>
     </header>
     <div class="content">

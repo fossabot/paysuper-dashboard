@@ -76,7 +76,7 @@ export default {
     @change="updateValue('en', $event)"
   />
 
-  <div v-if="isLocalizationEnabled">
+  <div v-if="isLocalizationEnabled && langsWithoutDefault.length">
     <div
       class="toggle-localizations"
       :class="{ '_opened': isLocalizationOpenedLocal }"

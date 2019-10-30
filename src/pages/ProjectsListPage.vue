@@ -130,7 +130,12 @@ export default {
           name: {
             en: name,
           },
-          image,
+          cover: {
+            images: {
+              en: image,
+            },
+            use_one_for_all: true,
+          },
         });
         /**
          * TODO: after https://protocolone.tpondemand.com/restui/board.aspx?#page=task/191909
@@ -182,7 +187,6 @@ export default {
       />
     </div>
   </div>
-  <!-- <input ref="file" type="file" @input="upload"> -->
   <div class="content">
     <ProjectPanelItem
       class="panel-item"

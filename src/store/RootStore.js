@@ -7,6 +7,7 @@ import resources from '@/resources';
 import DictionariesStore from './DictionariesStore';
 import LeaveFeedbackStore from './LeaveFeedbackStore';
 import UserStore from './UserStore';
+import ExportFile from './ExportFileStore';
 
 Vue.use(Vuex);
 
@@ -113,5 +114,6 @@ export default new Vuex.Store({
     Dictionaries: DictionariesStore(resources),
     LeaveFeedback: LeaveFeedbackStore(resources),
     User: UserStore(resources),
+    ExportFile: ExportFile(resources),
   },
 });

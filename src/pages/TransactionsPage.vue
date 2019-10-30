@@ -24,7 +24,7 @@ const STATUS_COLOR = {
 };
 
 export default {
-  name: 'transactions',
+  name: 'TransactionsPage',
 
   components: {
     TransactionsListExport,
@@ -106,7 +106,14 @@ export default {
     get,
 
     updateFiltersFromQuery() {
-      this.filters = this.getFilterValues(['quickFilter', 'offset', 'limit', 'status']);
+      this.filters = this.getFilterValues([
+        'quickFilter',
+        'offset',
+        'limit',
+        'status',
+        'dateFrom',
+        'dateTo',
+      ]);
     },
 
     filterTransactions() {

@@ -11,5 +11,9 @@
     0px 2px 6px rgba(8, 35, 48, 0.08);
   border-radius: 8px;
   padding: 32px;
+
+  & + & {
+    margin-top: 8px;
+  }
 }
 </style>
