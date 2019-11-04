@@ -1,6 +1,7 @@
 PaySuper Dashboard
 =====
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpaysuper%2Fpaysuper-dashboard.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpaysuper%2Fpaysuper-dashboard?ref=badge_shield)
 
 PaySuper is a unique, simple payment toolkit designed to make developers self-reliant. It’s an open-source payment service 
 with a highly customizable payment form, an intuitive API, and comprehensible, eye-catching reports.
@@ -121,3 +122,7 @@ PaySuper welcomes contributions from anyone and everyone. Please refer to each p
 The master branch of this repository contains the latest stable release of this component.
 
  
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpaysuper%2Fpaysuper-dashboard.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpaysuper%2Fpaysuper-dashboard?ref=badge_large)
